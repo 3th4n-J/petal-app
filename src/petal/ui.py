@@ -45,7 +45,12 @@ class CycleApp:
         page.floating_action_button = self._fab()
         page.floating_action_button_location = \
             ft.FloatingActionButtonLocation.CENTER_DOCKED
-        page.bottom_appbar = self._bottom_bar()
+        self._switcher = ft.AnimatedSwitcher(
+            content=ft.Container(), transition=ft.AnimatedSwitcherTransition.FADE,
+            duration=220, reverse_duration=120,
+            switch_in_curve=ft.AnimationCurve.EASE_OUT,
+            switch_out_curve=ft.AnimationCurve.EASE_IN)
+        page.bottom_appbar = self._build_nav()
         page.add(self.body)
 
         if self.db.has_pin():
@@ -54,39 +59,57 @@ class CycleApp:
             self.render()
 
     # ---- bottom app bar (docked FAB notch) -----------------------------
-    def _nav_item(self, idx, icon, sel_icon, lbl) -> ft.Control:
-        active = self.index == idx
-        return ft.Container(
-            on_click=lambda e, i=idx: self._select(i),
-            border_radius=T.sc(16), padding=ft.padding.symmetric(horizontal=T.sc(14), vertical=T.sc(6)),
-            bgcolor=T.alpha(T.PRIMARY, 0.14) if active else None,
-            content=ft.Column(
-                spacing=T.sc(2), tight=True,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[
-                    ft.Icon(sel_icon if active else icon,
-                            color=T.PRIMARY if active else T.MUTED, size=T.sc(22)),
-                    ft.Text(lbl, size=T.sc(11), color=T.PRIMARY if active else T.MUTED,
-                            weight=ft.FontWeight.W_600 if active else ft.FontWeight.W_500),
-                ]))
+    def _pill_left(self, index: int) -> float:
+        slot = (0, 1, 3, 4)[index]          # centre slot (2) is the FAB notch
+        center = slot * self._slotW + self._slotW / 2
+        return center - self._pill_w / 2
 
-    def _bottom_bar(self) -> ft.BottomAppBar:
-        items = [self._nav_item(*n) for n in self._NAV]
-        # Material draws a clean top-edge shadow; surface_tint transparent forces
-        # the shadow_color to render (M3 would otherwise swap it for a tint).
+    def _build_nav(self) -> ft.BottomAppBar:
+        barW = self.page.width or self.page.window_width or 430
+        self._slotW = barW / 5.0
+        self._pill_w = min(self._slotW * 0.82, T.sc(80))
+        self._pill_h = T.sc(52)
+        bar_h = T.sc(72)
+        self._pill_top = (bar_h - self._pill_h) / 2
+        # The active "box" is a positioned pill that slides + springs between items.
+        self._pill = ft.Container(
+            width=self._pill_w, height=self._pill_h, border_radius=T.sc(16),
+            bgcolor=T.alpha(T.PRIMARY, 0.16),
+            left=self._pill_left(self.index), top=self._pill_top,
+            animate_position=ft.Animation(480, ft.AnimationCurve.ELASTIC_OUT),
+            animate=ft.Animation(250, ft.AnimationCurve.EASE_OUT))
+        self._nav_icons, self._nav_labels, cells = [], [], []
+        for i, (idx, icon, sel_icon, lbl) in enumerate(self._NAV):
+            active = i == self.index
+            ic = ft.Icon(sel_icon if active else icon, size=T.sc(22),
+                         color=T.PRIMARY if active else T.MUTED)
+            lb = ft.Text(lbl, size=T.sc(11), color=T.PRIMARY if active else T.MUTED,
+                         weight=ft.FontWeight.W_600 if active else ft.FontWeight.W_500)
+            self._nav_icons.append(ic)
+            self._nav_labels.append(lb)
+            cells.append(ft.Container(
+                width=self._slotW, alignment=ft.alignment.center,
+                on_click=lambda e, k=i: self._select(k),
+                content=ft.Column([ic, lb], spacing=2, tight=True,
+                                  alignment=ft.MainAxisAlignment.CENTER,
+                                  horizontal_alignment=ft.CrossAxisAlignment.CENTER)))
+        row = ft.Row(spacing=0, controls=[
+            cells[0], cells[1], ft.Container(width=self._slotW), cells[2], cells[3]])
         return ft.BottomAppBar(
             bgcolor=T.SURFACE, shape=ft.NotchShape.CIRCULAR, notch_margin=T.sc(8),
-            height=T.sc(72), padding=ft.padding.symmetric(horizontal=T.sc(10)),
-            elevation=24, surface_tint_color="#00000000",
+            height=bar_h, padding=0, elevation=24, surface_tint_color="#00000000",
             shadow_color=T.alpha(T.PRIMARY_DEEP, 0.65),
-            content=ft.Row(
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[
-                    ft.Row(items[:2], spacing=T.sc(4)),
-                    ft.Container(width=T.sc(52)),  # gap for the docked FAB notch
-                    ft.Row(items[2:], spacing=T.sc(4)),
-                ]))
+            content=ft.Stack([self._pill, row]))
+
+    def _sync_nav(self):
+        for i, (idx, icon, sel_icon, lbl) in enumerate(self._NAV):
+            active = i == self.index
+            self._nav_icons[i].name = sel_icon if active else icon
+            self._nav_icons[i].color = T.PRIMARY if active else T.MUTED
+            self._nav_labels[i].color = T.PRIMARY if active else T.MUTED
+            self._nav_labels[i].weight = (ft.FontWeight.W_600 if active
+                                          else ft.FontWeight.W_500)
+        self._pill.left = self._pill_left(self.index)
 
     def _fab(self) -> ft.FloatingActionButton:
         # FABs only take a solid bgcolor, so the gradient lives in a circular
@@ -104,10 +127,11 @@ class CycleApp:
         self.render()
 
     def _on_resize(self, e=None):
-        # Recompute the scale from the live viewport width and rebuild the
-        # current screen so text/icons/controls resize with the window.
-        if not T.set_scale(self.page.width):
-            return
+        # Recompute scale + slot positions and rebuild the nav/FAB, then the
+        # current screen, so everything resizes with the window.
+        T.set_scale(self.page.width)
+        self.page.bottom_appbar = self._build_nav()
+        self.page.floating_action_button = self._fab()
         if self._mode == "lock":
             self._show_lock()
         elif self._mode == "form":
@@ -123,11 +147,12 @@ class CycleApp:
     def render(self):
         self._mode = "main"
         self.page.appbar = None
-        self.page.bottom_appbar = self._bottom_bar()
         self._chrome(True)
         self.body.gradient = T.hero_gradient() if self.index == 0 else T.page_gradient()
         view = [self._home, self._calendar, self._insights, self._settings][self.index]()
-        self.body.content = ft.Column([view], scroll=ft.ScrollMode.AUTO, expand=True)
+        self._switcher.content = ft.Column([view], scroll=ft.ScrollMode.AUTO, expand=True)
+        self.body.content = self._switcher
+        self._sync_nav()
         self.page.update()
 
     def _toast(self, msg: str):
@@ -472,6 +497,7 @@ class CycleApp:
         T.apply_theme(name)
         self.page.theme = T.app_theme()
         self.page.bgcolor = T.BG
+        self.page.bottom_appbar = self._build_nav()
         self.page.floating_action_button = self._fab()
         self.render()
 
