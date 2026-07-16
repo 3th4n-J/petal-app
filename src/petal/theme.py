@@ -115,3 +115,9 @@ def obtn_style() -> ft.ButtonStyle:
     """Outlined-button style whose border follows the active theme."""
     return ft.ButtonStyle(side=ft.BorderSide(1.4, PRIMARY), color=PRIMARY,
                           shape=ft.RoundedRectangleBorder(radius=14))
+
+
+def fab_gradient() -> ft.LinearGradient:
+    """A soft gradient for the add button, drawn from the active theme."""
+    return ft.LinearGradient(begin=ft.alignment.top_left,
+                             end=ft.alignment.bottom_right, colors=[PRIMARY, ACCENT])

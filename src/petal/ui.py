@@ -38,9 +38,7 @@ class CycleApp:
         page.window_width, page.window_height = 430, 880
 
         self.body = ft.Container(expand=True, gradient=T.page_gradient())
-        page.floating_action_button = ft.FloatingActionButton(
-            icon=ft.Icons.ADD, bgcolor=T.ACCENT, foreground_color="white",
-            shape=ft.CircleBorder(), on_click=lambda e: self.open_log())
+        page.floating_action_button = self._fab()
         page.floating_action_button_location = \
             ft.FloatingActionButtonLocation.CENTER_DOCKED
         page.bottom_appbar = self._bottom_bar()
@@ -70,9 +68,13 @@ class CycleApp:
 
     def _bottom_bar(self) -> ft.BottomAppBar:
         items = [self._nav_item(*n) for n in self._NAV]
+        # Material draws a clean top-edge shadow; surface_tint transparent forces
+        # the shadow_color to render (M3 would otherwise swap it for a tint).
         return ft.BottomAppBar(
             bgcolor=T.SURFACE, shape=ft.NotchShape.CIRCULAR, notch_margin=8,
             height=72, padding=ft.padding.symmetric(horizontal=10),
+            elevation=24, surface_tint_color="#00000000",
+            shadow_color=T.alpha(T.PRIMARY_DEEP, 0.65),
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -81,6 +83,17 @@ class CycleApp:
                     ft.Container(width=52),  # gap for the docked FAB notch
                     ft.Row(items[2:], spacing=4),
                 ]))
+
+    def _fab(self) -> ft.FloatingActionButton:
+        # FABs only take a solid bgcolor, so the gradient lives in a circular
+        # content container while the FAB itself stays transparent (keeps the notch).
+        return ft.FloatingActionButton(
+            content=ft.Container(
+                width=56, height=56, border_radius=28, alignment=ft.alignment.center,
+                gradient=T.fab_gradient(),
+                content=ft.Icon(ft.Icons.ADD, color="white", size=26)),
+            bgcolor="#00000000", elevation=0, shape=ft.CircleBorder(),
+            on_click=lambda e: self.open_log())
 
     def _select(self, i: int):
         self.index = i
@@ -442,6 +455,7 @@ class CycleApp:
         T.apply_theme(name)
         self.page.theme = T.app_theme()
         self.page.bgcolor = T.BG
+        self.page.floating_action_button = self._fab()
         self.render()
 
     # ---- PIN / lock ----------------------------------------------------
@@ -624,7 +638,8 @@ class CycleApp:
                 self.page.update(); return
             self.render()
 
-        form = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True, spacing=16, controls=[
+        form = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True, spacing=16,
+                         horizontal_alignment=ft.CrossAxisAlignment.STRETCH, controls=[
             T.card(ft.Column(spacing=14, controls=[
                 ft.Row([ft.Text("Start", width=70, color=T.MUTED), start_btn]),
                 ft.Row([ft.Text("End", width=70, color=T.MUTED), end_btn,
