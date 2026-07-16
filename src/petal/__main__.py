@@ -1,4 +1,4 @@
-"""Entry point: `python -m cycle_tracker` / `uv run cycle-tracker`."""
+"""Entry point: `python -m petal` / `uv run petal`."""
 import flet as ft
 
 from .ui import main

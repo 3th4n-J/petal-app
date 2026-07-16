@@ -24,7 +24,7 @@ class CycleApp:
         today = date.today()
         self.cal_year, self.cal_month = today.year, today.month
 
-        page.title = "Cycle Tracker"
+        page.title = "Petal"
         page.theme = T.app_theme()
         page.bgcolor = T.BG
         page.padding = 0
@@ -325,7 +325,7 @@ class CycleApp:
             ft.Row(spacing=10, controls=[
                 ft.Icon(ft.Icons.FAVORITE, color=T.C_PERIOD, size=22),
                 ft.Column(spacing=0, controls=[
-                    ft.Text("Cycle Tracker", color=T.ON_SURFACE,
+                    ft.Text("Petal", color=T.ON_SURFACE,
                             weight=ft.FontWeight.BOLD, size=15),
                     ft.Text(f"Version {APP_VERSION}", color=T.MUTED, size=12),
                 ]),
