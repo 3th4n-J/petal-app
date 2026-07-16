@@ -1,4 +1,4 @@
-# Petal · v1.1.0
+# Petal · v1.2.0
 
 A period / cycle tracking app built with **Flet + SQLite** (mobile target).
 Managed with **uv** (Python 3.13).
@@ -12,6 +12,9 @@ A Flo-inspired, four-screen experience with soft-pastel theming:
 - **Calendar** — month grid with dots for logged period, predicted period,
   fertile window, and ovulation; month navigation and a legend.
 - **Insights** — average cycle & period length, cycles logged, editable history.
+- **Cycle phase card** — shows your current phase (Menstrual / Follicular /
+  Ovulation / Luteal) with a rotating hormone fun-fact (FSH, estrogen, LH,
+  progesterone).
 - **Settings** — profile (name, birthday), cycle-length preferences, an
   **Appearance** section with six pastel themes (Lavender, Coral, Teal, Baby
   blue, Storm, Pale), an **App lock** PIN, data actions, and About.

@@ -166,7 +166,7 @@ class CycleApp:
             padding=ft.padding.only(left=18, right=18, top=18, bottom=28),
             content=ft.Column(
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=18, controls=[hero, insight, tiles]))
+                spacing=18, controls=[hero, insight, tiles, self._phase_card(s)]))
 
     @staticmethod
     def _info_row(icon, icon_color, label, value) -> ft.Control:
@@ -174,6 +174,42 @@ class CycleApp:
             ft.Row([ft.Icon(icon, color=icon_color, size=20),
                     ft.Text(label, color=T.MUTED, size=13)]),
             ft.Text(value, weight=ft.FontWeight.W_600, color=T.ON_SURFACE)])
+
+    def _phase_card(self, s: cs.CycleStats) -> ft.Control:
+        """Current menstrual phase + a hormone fun-fact."""
+        if s.phase:
+            info = cs.PHASE_INFO.get(s.phase, {})
+            color = T.PHASE_COLORS.get(s.phase, T.PRIMARY)
+            title = f"{s.phase} phase"
+            desc = info.get("desc", "")
+            fact = info.get("hormone", "")
+            day_txt = f"Day {s.cycle_day}" if s.cycle_day else ""
+        else:
+            color = T.PRIMARY
+            title = "Cycle phase"
+            desc = "Log a period to see your current phase."
+            fact = cs.GENERAL_FACTS[date.today().day % len(cs.GENERAL_FACTS)]
+            day_txt = ""
+
+        return T.card(ft.Column(spacing=10, controls=[
+            ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, controls=[
+                T.label("CURRENT PHASE"),
+                ft.Text(day_txt, size=12, color=T.MUTED) if day_txt else ft.Container(),
+            ]),
+            ft.Row(spacing=10, controls=[
+                ft.Container(width=14, height=14, bgcolor=color, border_radius=7),
+                ft.Text(title, size=18, weight=ft.FontWeight.BOLD, color=T.ON_SURFACE),
+            ]),
+            ft.Text(desc, size=13, color=T.MUTED) if desc else ft.Container(),
+            ft.Divider(height=1, color="#EEE"),
+            ft.Row(spacing=10, vertical_alignment=ft.CrossAxisAlignment.START, controls=[
+                ft.Icon(ft.Icons.SCIENCE_OUTLINED, color=color, size=20),
+                ft.Column(spacing=2, expand=True, controls=[
+                    T.label("HORMONE INSIGHT"),
+                    ft.Text(fact, size=13, color=T.ON_SURFACE),
+                ]),
+            ]),
+        ]))
 
     # ---- Calendar ------------------------------------------------------
     def _shift_month(self, delta: int):
@@ -273,9 +309,15 @@ class CycleApp:
                      ft.FilledButton("Delete", on_click=_do)])
         self.page.open(dlg)
 
-    # ---- Settings ------------------------------------------------------
+    # ---- Settings (centered content) -----------------------------------
+    @staticmethod
+    def _sec_label(text: str) -> ft.Control:
+        return ft.Row([T.label(text)], alignment=ft.MainAxisAlignment.CENTER)
+
     def _settings(self) -> ft.Control:
+        C = ft.CrossAxisAlignment.CENTER
         name_tf = ft.TextField(label="Name", border_radius=14, border_color=T.PRIMARY,
+                               text_align=ft.TextAlign.CENTER,
                                value=self.db.get_setting("profile_name", ""))
         bday = {"d": self._parse_iso(self.db.get_setting("profile_birthday"))}
         bday_btn = ft.OutlinedButton(icon=ft.Icons.CAKE_OUTLINED, style=T.obtn_style())
@@ -290,9 +332,11 @@ class CycleApp:
         dc, dp = self._defaults()
         cyc_tf = ft.TextField(label="Default cycle length (days)", value=str(dc),
                               border_radius=14, border_color=T.PRIMARY,
+                              text_align=ft.TextAlign.CENTER,
                               input_filter=ft.NumbersOnlyInputFilter())
         per_tf = ft.TextField(label="Default period length (days)", value=str(dp),
                               border_radius=14, border_color=T.PRIMARY,
+                              text_align=ft.TextAlign.CENTER,
                               input_filter=ft.NumbersOnlyInputFilter())
 
         def save_prefs(e):
@@ -304,32 +348,36 @@ class CycleApp:
             self._toast("Saved")
             self.render()
 
-        profile = T.card(ft.Column(spacing=14, controls=[
-            T.label("PROFILE"), name_tf,
-            ft.Row([ft.Text("Birthday", width=90, color=T.MUTED), bday_btn]),
+        profile = T.card(ft.Column(spacing=14, horizontal_alignment=C, controls=[
+            self._sec_label("PROFILE"), name_tf,
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER,
+                   controls=[ft.Text("Birthday", color=T.MUTED), bday_btn]),
         ]))
-        prefs = T.card(ft.Column(spacing=14, controls=[
-            T.label("CYCLE PREFERENCES"),
+        prefs = T.card(ft.Column(spacing=14, horizontal_alignment=C, controls=[
+            self._sec_label("CYCLE PREFERENCES"),
             ft.Text("Used for predictions until you've logged enough history.",
-                    size=12, color=T.MUTED),
+                    size=12, color=T.MUTED, text_align=ft.TextAlign.CENTER),
             cyc_tf, per_tf,
         ]))
-        save_btn = ft.Row(alignment=ft.MainAxisAlignment.END,
+        save_btn = ft.Row(alignment=ft.MainAxisAlignment.CENTER,
                           controls=[T.pill("Save", icon=ft.Icons.CHECK, on_click=save_prefs)])
 
-        appearance = T.card(ft.Column(spacing=12, controls=[
-            T.label("APPEARANCE"),
-            ft.Text("Theme", color=T.ON_SURFACE, weight=ft.FontWeight.W_600),
-            ft.Row(wrap=True, spacing=12, run_spacing=12,
+        appearance = T.card(ft.Column(spacing=12, horizontal_alignment=C, controls=[
+            self._sec_label("APPEARANCE"),
+            ft.Text("Theme", color=T.ON_SURFACE, weight=ft.FontWeight.W_600,
+                    text_align=ft.TextAlign.CENTER),
+            ft.Row(wrap=True, spacing=16, run_spacing=14,
+                   alignment=ft.MainAxisAlignment.SPACE_EVENLY,
                    controls=[self._theme_swatch(n) for n in T.THEMES]),
         ]))
 
-        lock = T.card(ft.Column(spacing=12, controls=[
-            T.label("APP LOCK"),
-            ft.Row([ft.Icon(ft.Icons.LOCK_OUTLINE, color=T.PRIMARY, size=20),
-                    ft.Text("PIN lock " + ("enabled" if self.db.has_pin() else "off"),
-                            color=T.ON_SURFACE, weight=ft.FontWeight.W_600)]),
-            ft.Row(spacing=10, controls=(
+        lock = T.card(ft.Column(spacing=12, horizontal_alignment=C, controls=[
+            self._sec_label("APP LOCK"),
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
+                ft.Icon(ft.Icons.LOCK_OUTLINE, color=T.PRIMARY, size=20),
+                ft.Text("PIN lock " + ("enabled" if self.db.has_pin() else "off"),
+                        color=T.ON_SURFACE, weight=ft.FontWeight.W_600)]),
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=10, controls=(
                 [ft.OutlinedButton("Change PIN", style=T.obtn_style(),
                                    on_click=lambda e: self._pin_dialog(True)),
                  ft.TextButton("Remove PIN", on_click=self._remove_pin)]
@@ -338,9 +386,9 @@ class CycleApp:
             )),
         ]))
 
-        data = T.card(ft.Column(spacing=12, controls=[
-            T.label("DATA"),
-            ft.Row(spacing=10, controls=[
+        data = T.card(ft.Column(spacing=12, horizontal_alignment=C, controls=[
+            self._sec_label("DATA"),
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=10, controls=[
                 ft.OutlinedButton("Load sample data", icon=ft.Icons.DATASET,
                                   style=T.obtn_style(), on_click=self._load_sample),
                 ft.TextButton("Delete all data", icon=ft.Icons.DELETE_FOREVER,
@@ -348,11 +396,11 @@ class CycleApp:
             ]),
         ]))
 
-        about = T.card(ft.Column(spacing=8, controls=[
-            T.label("ABOUT"),
-            ft.Row(spacing=10, controls=[
+        about = T.card(ft.Column(spacing=8, horizontal_alignment=C, controls=[
+            self._sec_label("ABOUT"),
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=10, controls=[
                 ft.Icon(ft.Icons.FAVORITE, color=T.C_PERIOD, size=22),
-                ft.Column(spacing=0, controls=[
+                ft.Column(spacing=0, horizontal_alignment=C, controls=[
                     ft.Text("Petal", color=T.ON_SURFACE,
                             weight=ft.FontWeight.BOLD, size=15),
                     ft.Text(f"Version {APP_VERSION}", color=T.MUTED, size=12),
@@ -361,14 +409,14 @@ class CycleApp:
             ft.Text("A private period and cycle tracker — log periods, symptoms "
                     "and moods, and see your phase, fertile window and next-period "
                     "predictions at a glance. Your data stays on your device.",
-                    size=13, color=T.MUTED),
+                    size=13, color=T.MUTED, text_align=ft.TextAlign.CENTER),
         ]))
 
         return ft.Container(
             padding=ft.padding.only(left=16, right=16, top=16, bottom=24),
             content=ft.Column(spacing=14, controls=[
-                T.h1("Settings"), profile, prefs, save_btn,
-                appearance, lock, data, about]))
+                ft.Row([T.h1("Settings")], alignment=ft.MainAxisAlignment.CENTER),
+                profile, prefs, save_btn, appearance, lock, data, about]))
 
     def _theme_swatch(self, name: str) -> ft.Control:
         pal = T.THEMES[name]

@@ -158,3 +158,37 @@ def day_map(entries: List[PeriodEntry], today: Optional[date] = None,
             out[d] = PERIOD
 
     return out
+
+
+# ---- educational content for the phase card ----------------------------
+PHASE_INFO = {
+    PHASE_MENSTRUAL: {
+        "desc": "Your period — the uterine lining sheds.",
+        "hormone": "Estrogen and progesterone are at their lowest, which is what "
+                   "triggers the bleed.",
+    },
+    PHASE_FOLLICULAR: {
+        "desc": "Follicles mature as your body preps to release an egg.",
+        "hormone": "FSH rises to grow ovarian follicles and estrogen climbs "
+                   "steadily — often lifting energy and mood.",
+    },
+    PHASE_OVULATION: {
+        "desc": "A mature egg is released — your most fertile window.",
+        "hormone": "A sharp LH surge alongside peak estrogen triggers ovulation "
+                   "within about 24–36 hours.",
+    },
+    PHASE_LUTEAL: {
+        "desc": "The body prepares for a possible pregnancy.",
+        "hormone": "Progesterone rises to thicken the lining; if there's no "
+                   "pregnancy it drops — cueing PMS and the next period.",
+    },
+}
+
+GENERAL_FACTS = [
+    "A full cycle is driven by four hormones in sequence: FSH, estrogen, LH and "
+    "progesterone.",
+    "The LH surge is exactly what at-home ovulation predictor kits detect in urine.",
+    "Estrogen peaks twice each cycle — just before ovulation and again mid-luteal.",
+    "Progesterone nudges your resting body temperature up ~0.3°C after ovulation.",
+    "FSH (follicle-stimulating hormone) kicks off each cycle by maturing follicles.",
+]

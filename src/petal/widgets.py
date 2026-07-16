@@ -82,13 +82,19 @@ def phase_chip(phase: Optional[str]) -> ft.Control:
 
 
 def stat_tile(value: str, caption: str) -> ft.Control:
+    # Fixed height + equal expand keeps all tiles identical regardless of how
+    # the caption wraps.
     return ft.Container(
-        expand=True, padding=14, border_radius=18, bgcolor=T.SURFACE,
-        content=ft.Column(spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        expand=True, height=92, padding=12, border_radius=18, bgcolor=T.SURFACE,
+        alignment=ft.alignment.center,
+        content=ft.Column(spacing=2, tight=True,
+                          alignment=ft.MainAxisAlignment.CENTER,
+                          horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                           controls=[
                               ft.Text(value, size=22, weight=ft.FontWeight.BOLD,
                                       color=T.PRIMARY_DEEP),
-                              ft.Text(caption, size=11, color=T.MUTED),
+                              ft.Text(caption, size=11, color=T.MUTED,
+                                      text_align=ft.TextAlign.CENTER),
                           ]),
     )
 
