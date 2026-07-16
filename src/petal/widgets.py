@@ -1,4 +1,7 @@
-"""Reusable visual widgets: the cycle ring and the calendar grid."""
+"""Reusable visual widgets: the cycle ring and the calendar grid.
+
+All sizes go through theme.sc() so they scale with the viewport.
+"""
 from __future__ import annotations
 
 import calendar as _cal
@@ -15,26 +18,24 @@ from . import theme as T
 _TAU = math.pi * 2
 
 
-def cycle_ring(stats: cs.CycleStats, size: int = 250) -> ft.Control:
+def cycle_ring(stats: cs.CycleStats, size: Optional[float] = None) -> ft.Control:
     """Flo-style hero ring: track + progress arc with centred cycle info."""
-    stroke = 18
+    size = T.sc(260) if size is None else size
+    stroke = T.sc(18)
     inset = stroke / 2 + 2
     box = size - inset * 2
     start = -math.pi / 2  # 12 o'clock
     ink = T.ON_HERO
 
     track = cv.Arc(
-        x=inset, y=inset, width=box, height=box,
-        start_angle=0, sweep_angle=_TAU,
+        x=inset, y=inset, width=box, height=box, start_angle=0, sweep_angle=_TAU,
         paint=ft.Paint(style=ft.PaintingStyle.STROKE, stroke_width=stroke,
-                       color=T.alpha(ink, 0.28), stroke_cap=ft.StrokeCap.ROUND),
-    )
+                       color=T.alpha(ink, 0.28), stroke_cap=ft.StrokeCap.ROUND))
     progress = cv.Arc(
-        x=inset, y=inset, width=box, height=box,
-        start_angle=start, sweep_angle=_TAU * max(stats.progress, 0.001),
+        x=inset, y=inset, width=box, height=box, start_angle=start,
+        sweep_angle=_TAU * max(stats.progress, 0.001),
         paint=ft.Paint(style=ft.PaintingStyle.STROKE, stroke_width=stroke,
-                       color=ink, stroke_cap=ft.StrokeCap.ROUND),
-    )
+                       color=ink, stroke_cap=ft.StrokeCap.ROUND))
     ring = cv.Canvas([track, progress], width=size, height=size)
 
     if stats.cycle_day:
@@ -56,10 +57,11 @@ def cycle_ring(stats: cs.CycleStats, size: int = 250) -> ft.Control:
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=0,
         controls=[
-            ft.Text(top, size=12, color=T.alpha(ink, 0.85), weight=ft.FontWeight.W_600,
+            ft.Text(top, size=T.sc(12), color=T.alpha(ink, 0.85),
+                    weight=ft.FontWeight.W_600,
                     style=ft.TextStyle(letter_spacing=1.5)),
-            ft.Text(big, size=64, color=ink, weight=ft.FontWeight.BOLD),
-            ft.Text(bottom, size=14, color=ink, weight=ft.FontWeight.W_500),
+            ft.Text(big, size=T.sc(64), color=ink, weight=ft.FontWeight.BOLD),
+            ft.Text(bottom, size=T.sc(14), color=ink, weight=ft.FontWeight.W_500),
         ],
     )
     return ft.Container(
@@ -74,26 +76,24 @@ def phase_chip(phase: Optional[str]) -> ft.Control:
         return ft.Container()
     color = T.PHASE_COLORS.get(phase, T.PRIMARY)
     return ft.Container(
-        content=ft.Text(f"{phase} phase", color="white", size=13,
+        content=ft.Text(f"{phase} phase", color="white", size=T.sc(13),
                         weight=ft.FontWeight.W_600),
-        bgcolor=color, border_radius=20,
-        padding=ft.padding.symmetric(horizontal=16, vertical=8),
+        bgcolor=color, border_radius=T.sc(20),
+        padding=ft.padding.symmetric(horizontal=T.sc(16), vertical=T.sc(8)),
     )
 
 
 def stat_tile(value: str, caption: str) -> ft.Control:
-    # Fixed height + equal expand keeps all tiles identical regardless of how
-    # the caption wraps.
     return ft.Container(
-        expand=True, height=92, padding=12, border_radius=18, bgcolor=T.SURFACE,
-        alignment=ft.alignment.center,
+        expand=True, height=T.sc(92), padding=T.sc(12), border_radius=T.sc(18),
+        bgcolor=T.SURFACE, alignment=ft.alignment.center,
         content=ft.Column(spacing=2, tight=True,
                           alignment=ft.MainAxisAlignment.CENTER,
                           horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                           controls=[
-                              ft.Text(value, size=22, weight=ft.FontWeight.BOLD,
+                              ft.Text(value, size=T.sc(22), weight=ft.FontWeight.BOLD,
                                       color=T.PRIMARY_DEEP),
-                              ft.Text(caption, size=11, color=T.MUTED,
+                              ft.Text(caption, size=T.sc(11), color=T.MUTED,
                                       text_align=ft.TextAlign.CENTER),
                           ]),
     )
@@ -111,8 +111,9 @@ def calendar_legend() -> ft.Control:
     dots = []
     for color, name in _LEGEND:
         dots.append(ft.Row(spacing=6, tight=True, controls=[
-            ft.Container(width=12, height=12, bgcolor=color, border_radius=6),
-            ft.Text(name, size=11, color=T.MUTED),
+            ft.Container(width=T.sc(12), height=T.sc(12), bgcolor=color,
+                         border_radius=T.sc(6)),
+            ft.Text(name, size=T.sc(11), color=T.MUTED),
         ]))
     return ft.Row(dots, alignment=ft.MainAxisAlignment.SPACE_AROUND, wrap=True)
 
@@ -123,33 +124,35 @@ def _day_cell(day: int, cat: Optional[str], is_today: bool) -> ft.Control:
         cs.FERTILE: T.C_FERTILE, cs.OVULATION: T.C_OVULATION,
     }.get(cat)
     dark = cat in (cs.PERIOD, cs.OVULATION)
-    txt = ft.Text(str(day), size=13,
+    d = T.sc(38)
+    txt = ft.Text(str(day), size=T.sc(13),
                   color="white" if dark and fill else T.ON_SURFACE,
                   weight=ft.FontWeight.BOLD if is_today else ft.FontWeight.W_500)
     return ft.Container(
-        width=38, height=38, alignment=ft.alignment.center, content=txt,
-        bgcolor=fill, border_radius=19,
-        border=ft.border.all(2, T.PRIMARY) if is_today else None,
+        width=d, height=d, alignment=ft.alignment.center, content=txt,
+        bgcolor=fill, border_radius=d / 2,
+        border=ft.border.all(T.sc(2), T.PRIMARY) if is_today else None,
     )
 
 
 def calendar_grid(year: int, month: int, day_map: Dict[date, str],
                   today: date) -> ft.Control:
+    d = T.sc(38)
     head = ft.Row(
         alignment=ft.MainAxisAlignment.SPACE_AROUND,
-        controls=[ft.Container(width=38, alignment=ft.alignment.center,
-                               content=ft.Text(d, size=11, color=T.MUTED,
+        controls=[ft.Container(width=d, alignment=ft.alignment.center,
+                               content=ft.Text(wd, size=T.sc(11), color=T.MUTED,
                                                weight=ft.FontWeight.W_600))
-                  for d in ["M", "T", "W", "T", "F", "S", "S"]],
+                  for wd in ["M", "T", "W", "T", "F", "S", "S"]],
     )
     rows = [head]
     for week in _cal.Calendar(firstweekday=0).monthdayscalendar(year, month):
         cells = []
         for dnum in week:
             if dnum == 0:
-                cells.append(ft.Container(width=38, height=38))
+                cells.append(ft.Container(width=d, height=d))
             else:
-                d = date(year, month, dnum)
-                cells.append(_day_cell(dnum, day_map.get(d), d == today))
+                dt = date(year, month, dnum)
+                cells.append(_day_cell(dnum, day_map.get(dt), dt == today))
         rows.append(ft.Row(cells, alignment=ft.MainAxisAlignment.SPACE_AROUND))
-    return ft.Column(rows, spacing=6)
+    return ft.Column(rows, spacing=T.sc(6))

@@ -36,6 +36,10 @@ class CycleApp:
         page.bgcolor = T.BG
         page.padding = 0
         page.window_width, page.window_height = 430, 880
+        self._mode = "main"
+        self._form_entry = None
+        T.set_scale(page.width or page.window_width)
+        page.on_resize = self._on_resize
 
         self.body = ft.Container(expand=True, gradient=T.page_gradient())
         page.floating_action_button = self._fab()
@@ -54,15 +58,15 @@ class CycleApp:
         active = self.index == idx
         return ft.Container(
             on_click=lambda e, i=idx: self._select(i),
-            border_radius=16, padding=ft.padding.symmetric(horizontal=14, vertical=6),
+            border_radius=T.sc(16), padding=ft.padding.symmetric(horizontal=T.sc(14), vertical=T.sc(6)),
             bgcolor=T.alpha(T.PRIMARY, 0.14) if active else None,
             content=ft.Column(
-                spacing=2, tight=True,
+                spacing=T.sc(2), tight=True,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
                     ft.Icon(sel_icon if active else icon,
-                            color=T.PRIMARY if active else T.MUTED, size=22),
-                    ft.Text(lbl, size=11, color=T.PRIMARY if active else T.MUTED,
+                            color=T.PRIMARY if active else T.MUTED, size=T.sc(22)),
+                    ft.Text(lbl, size=T.sc(11), color=T.PRIMARY if active else T.MUTED,
                             weight=ft.FontWeight.W_600 if active else ft.FontWeight.W_500),
                 ]))
 
@@ -71,17 +75,17 @@ class CycleApp:
         # Material draws a clean top-edge shadow; surface_tint transparent forces
         # the shadow_color to render (M3 would otherwise swap it for a tint).
         return ft.BottomAppBar(
-            bgcolor=T.SURFACE, shape=ft.NotchShape.CIRCULAR, notch_margin=8,
-            height=72, padding=ft.padding.symmetric(horizontal=10),
+            bgcolor=T.SURFACE, shape=ft.NotchShape.CIRCULAR, notch_margin=T.sc(8),
+            height=T.sc(72), padding=ft.padding.symmetric(horizontal=T.sc(10)),
             elevation=24, surface_tint_color="#00000000",
             shadow_color=T.alpha(T.PRIMARY_DEEP, 0.65),
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Row(items[:2], spacing=4),
-                    ft.Container(width=52),  # gap for the docked FAB notch
-                    ft.Row(items[2:], spacing=4),
+                    ft.Row(items[:2], spacing=T.sc(4)),
+                    ft.Container(width=T.sc(52)),  # gap for the docked FAB notch
+                    ft.Row(items[2:], spacing=T.sc(4)),
                 ]))
 
     def _fab(self) -> ft.FloatingActionButton:
@@ -89,9 +93,9 @@ class CycleApp:
         # content container while the FAB itself stays transparent (keeps the notch).
         return ft.FloatingActionButton(
             content=ft.Container(
-                width=56, height=56, border_radius=28, alignment=ft.alignment.center,
+                width=T.sc(56), height=T.sc(56), border_radius=T.sc(28), alignment=ft.alignment.center,
                 gradient=T.fab_gradient(),
-                content=ft.Icon(ft.Icons.ADD, color="white", size=26)),
+                content=ft.Icon(ft.Icons.ADD, color="white", size=T.sc(26))),
             bgcolor="#00000000", elevation=0, shape=ft.CircleBorder(),
             on_click=lambda e: self.open_log())
 
@@ -99,12 +103,25 @@ class CycleApp:
         self.index = i
         self.render()
 
+    def _on_resize(self, e=None):
+        # Recompute the scale from the live viewport width and rebuild the
+        # current screen so text/icons/controls resize with the window.
+        if not T.set_scale(self.page.width):
+            return
+        if self._mode == "lock":
+            self._show_lock()
+        elif self._mode == "form":
+            self.open_log(self._form_entry)
+        else:
+            self.render()
+
     def _chrome(self, show: bool):
         """Show/hide bottom bar + FAB (hidden on the lock screen / log form)."""
         self.page.bottom_appbar.visible = show
         self.page.floating_action_button.visible = show
 
     def render(self):
+        self._mode = "main"
         self.page.appbar = None
         self.page.bottom_appbar = self._bottom_bar()
         self._chrome(True)
@@ -144,14 +161,14 @@ class CycleApp:
             fertile = f"{fmt(s.fertile_start)} – {fmt(s.fertile_end)}"
 
         hero = ft.Column(
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=14,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=T.sc(14),
             controls=[
-                ft.Text(self._greeting(), size=22, color=T.ON_HERO,
+                ft.Text(self._greeting(), size=T.sc(22), color=T.ON_HERO,
                         weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
-                ft.Text(today.strftime("%A, %d %B").upper(), size=12,
+                ft.Text(today.strftime("%A, %d %B").upper(), size=T.sc(12),
                         color=T.alpha(T.ON_HERO, 0.85), weight=ft.FontWeight.W_600,
                         style=ft.TextStyle(letter_spacing=1.2)),
-                ft.Row([W.cycle_ring(s, size=260)],
+                ft.Row([W.cycle_ring(s, size=T.sc(260))],
                        alignment=ft.MainAxisAlignment.CENTER),
                 ft.Row([T.pill("Log period", icon=ft.Icons.WATER_DROP,
                                on_click=lambda e: self.open_log(), filled=False)],
@@ -159,7 +176,7 @@ class CycleApp:
             ],
         )
 
-        insight = T.card(ft.Column(spacing=12, controls=[
+        insight = T.card(ft.Column(spacing=T.sc(12), controls=[
             ft.Row([W.phase_chip(s.phase)]) if s.phase else ft.Container(),
             self._info_row(ft.Icons.EGG_OUTLINED, T.C_OVULATION, "Ovulation",
                            fmt(s.ovulation_date)),
@@ -169,23 +186,23 @@ class CycleApp:
                            fmt(s.next_predicted)),
         ]))
 
-        tiles = ft.Row(spacing=12, controls=[
+        tiles = ft.Row(spacing=T.sc(12), controls=[
             W.stat_tile(f"{s.avg_cycle_days or '—'}", "avg cycle (days)"),
             W.stat_tile(f"{s.avg_period_days or '—'}", "avg period (days)"),
             W.stat_tile(f"{s.logged_count}", "cycles logged"),
         ])
 
         return ft.Container(
-            padding=ft.padding.only(left=18, right=18, top=18, bottom=28),
+            padding=ft.padding.only(left=T.sc(18), right=T.sc(18), top=T.sc(18), bottom=T.sc(28)),
             content=ft.Column(
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=18, controls=[hero, insight, tiles, self._phase_card(s)]))
+                spacing=T.sc(18), controls=[hero, insight, tiles, self._phase_card(s)]))
 
     @staticmethod
     def _info_row(icon, icon_color, label, value) -> ft.Control:
         return ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, controls=[
-            ft.Row([ft.Icon(icon, color=icon_color, size=20),
-                    ft.Text(label, color=T.MUTED, size=13)]),
+            ft.Row([ft.Icon(icon, color=icon_color, size=T.sc(20)),
+                    ft.Text(label, color=T.MUTED, size=T.sc(13))]),
             ft.Text(value, weight=ft.FontWeight.W_600, color=T.ON_SURFACE)])
 
     def _phase_card(self, s: cs.CycleStats) -> ft.Control:
@@ -204,22 +221,22 @@ class CycleApp:
             fact = cs.GENERAL_FACTS[date.today().day % len(cs.GENERAL_FACTS)]
             day_txt = ""
 
-        return T.card(ft.Column(spacing=10, controls=[
+        return T.card(ft.Column(spacing=T.sc(10), controls=[
             ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, controls=[
                 T.label("CURRENT PHASE"),
-                ft.Text(day_txt, size=12, color=T.MUTED) if day_txt else ft.Container(),
+                ft.Text(day_txt, size=T.sc(12), color=T.MUTED) if day_txt else ft.Container(),
             ]),
-            ft.Row(spacing=10, controls=[
-                ft.Container(width=14, height=14, bgcolor=color, border_radius=7),
-                ft.Text(title, size=18, weight=ft.FontWeight.BOLD, color=T.ON_SURFACE),
+            ft.Row(spacing=T.sc(10), controls=[
+                ft.Container(width=T.sc(14), height=T.sc(14), bgcolor=color, border_radius=T.sc(7)),
+                ft.Text(title, size=T.sc(18), weight=ft.FontWeight.BOLD, color=T.ON_SURFACE),
             ]),
-            ft.Text(desc, size=13, color=T.MUTED) if desc else ft.Container(),
-            ft.Divider(height=1, color="#EEE"),
-            ft.Row(spacing=10, vertical_alignment=ft.CrossAxisAlignment.START, controls=[
-                ft.Icon(ft.Icons.SCIENCE_OUTLINED, color=color, size=20),
-                ft.Column(spacing=2, expand=True, controls=[
+            ft.Text(desc, size=T.sc(13), color=T.MUTED) if desc else ft.Container(),
+            ft.Divider(height=T.sc(1), color="#EEE"),
+            ft.Row(spacing=T.sc(10), vertical_alignment=ft.CrossAxisAlignment.START, controls=[
+                ft.Icon(ft.Icons.SCIENCE_OUTLINED, color=color, size=T.sc(20)),
+                ft.Column(spacing=T.sc(2), expand=True, controls=[
                     T.label("HORMONE INSIGHT"),
-                    ft.Text(fact, size=13, color=T.ON_SURFACE),
+                    ft.Text(fact, size=T.sc(13), color=T.ON_SURFACE),
                 ]),
             ]),
         ]))
@@ -240,33 +257,33 @@ class CycleApp:
             controls=[
                 ft.IconButton(ft.Icons.CHEVRON_LEFT, icon_color=T.PRIMARY,
                               on_click=lambda e: self._shift_month(-1)),
-                ft.Text(title, size=18, weight=ft.FontWeight.BOLD, color=T.ON_SURFACE),
+                ft.Text(title, size=T.sc(18), weight=ft.FontWeight.BOLD, color=T.ON_SURFACE),
                 ft.IconButton(ft.Icons.CHEVRON_RIGHT, icon_color=T.PRIMARY,
                               on_click=lambda e: self._shift_month(1)),
             ])
-        grid = T.card(ft.Column(spacing=14, controls=[
+        grid = T.card(ft.Column(spacing=T.sc(14), controls=[
             W.calendar_grid(self.cal_year, self.cal_month, dm, date.today()),
-            ft.Divider(height=1, color="#EEE"),
+            ft.Divider(height=T.sc(1), color="#EEE"),
             W.calendar_legend(),
         ]))
         return ft.Container(
-            padding=ft.padding.only(left=16, right=16, top=16, bottom=24),
-            content=ft.Column(spacing=14, controls=[header, grid]))
+            padding=ft.padding.only(left=T.sc(16), right=T.sc(16), top=T.sc(16), bottom=T.sc(24)),
+            content=ft.Column(spacing=T.sc(14), controls=[header, grid]))
 
     # ---- Insights ------------------------------------------------------
     def _insights(self) -> ft.Control:
         s = self._stats()
         entries = self.db.list_all()
-        tiles = ft.Row(spacing=12, controls=[
+        tiles = ft.Row(spacing=T.sc(12), controls=[
             W.stat_tile(f"{s.avg_cycle_days or '—'}", "avg cycle (days)"),
             W.stat_tile(f"{s.avg_period_days or '—'}", "avg period (days)"),
         ])
-        tiles2 = ft.Row(spacing=12, controls=[
+        tiles2 = ft.Row(spacing=T.sc(12), controls=[
             W.stat_tile(f"{s.cycle_day or '—'}", "current cycle day"),
             W.stat_tile(f"{s.logged_count}", "cycles logged"),
         ])
         history = [ft.Row([T.h1("History"),
-                           ft.Text(f"{len(entries)} entries", color=T.MUTED, size=12)],
+                           ft.Text(f"{len(entries)} entries", color=T.MUTED, size=T.sc(12))],
                           alignment=ft.MainAxisAlignment.SPACE_BETWEEN)]
         if entries:
             history += [self._entry_card(e) for e in entries]
@@ -276,9 +293,9 @@ class CycleApp:
                 content=ft.Text("No entries yet — tap + to log a period.",
                                 color=T.MUTED)))
         return ft.Container(
-            padding=ft.padding.only(left=16, right=16, top=16, bottom=24),
-            content=ft.Column(spacing=14, controls=[
-                T.h1("Insights"), tiles, tiles2, ft.Container(height=4), *history]))
+            padding=ft.padding.only(left=T.sc(16), right=T.sc(16), top=T.sc(16), bottom=T.sc(24)),
+            content=ft.Column(spacing=T.sc(14), controls=[
+                T.h1("Insights"), tiles, tiles2, ft.Container(height=T.sc(4)), *history]))
 
     def _entry_card(self, entry: PeriodEntry) -> ft.Control:
         rng = entry.start_date.strftime("%d %b %Y")
@@ -292,16 +309,16 @@ class CycleApp:
         return T.card(padding=14, content=ft.Row(
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             controls=[
-                ft.Row(spacing=12, expand=True, controls=[
-                    ft.Container(width=8, height=42, bgcolor=T.C_PERIOD, border_radius=4),
-                    ft.Column(spacing=2, expand=True, controls=[
-                        ft.Text(rng, weight=ft.FontWeight.BOLD, size=15, color=T.ON_SURFACE),
-                        ft.Text(" • ".join(sub), size=12, color=T.MUTED),
-                        *([ft.Text(entry.notes, size=12, italic=True,
+                ft.Row(spacing=T.sc(12), expand=True, controls=[
+                    ft.Container(width=T.sc(8), height=T.sc(42), bgcolor=T.C_PERIOD, border_radius=T.sc(4)),
+                    ft.Column(spacing=T.sc(2), expand=True, controls=[
+                        ft.Text(rng, weight=ft.FontWeight.BOLD, size=T.sc(15), color=T.ON_SURFACE),
+                        ft.Text(" • ".join(sub), size=T.sc(12), color=T.MUTED),
+                        *([ft.Text(entry.notes, size=T.sc(12), italic=True,
                                    color=T.MUTED)] if entry.notes else []),
                     ]),
                 ]),
-                ft.Row(spacing=0, controls=[
+                ft.Row(spacing=T.sc(0), controls=[
                     ft.IconButton(ft.Icons.EDIT_OUTLINED, icon_color=T.PRIMARY,
                                   on_click=lambda e, en=entry: self.open_log(en)),
                     ft.IconButton(ft.Icons.DELETE_OUTLINE, icon_color=T.MUTED,
@@ -329,7 +346,7 @@ class CycleApp:
 
     def _settings(self) -> ft.Control:
         C = ft.CrossAxisAlignment.CENTER
-        name_tf = ft.TextField(label="Name", border_radius=14, border_color=T.PRIMARY,
+        name_tf = ft.TextField(label="Name", border_radius=T.sc(14), border_color=T.PRIMARY,
                                text_align=ft.TextAlign.CENTER,
                                value=self.db.get_setting("profile_name", ""))
         bday = {"d": self._parse_iso(self.db.get_setting("profile_birthday"))}
@@ -344,11 +361,11 @@ class CycleApp:
 
         dc, dp = self._defaults()
         cyc_tf = ft.TextField(label="Default cycle length (days)", value=str(dc),
-                              border_radius=14, border_color=T.PRIMARY,
+                              border_radius=T.sc(14), border_color=T.PRIMARY,
                               text_align=ft.TextAlign.CENTER,
                               input_filter=ft.NumbersOnlyInputFilter())
         per_tf = ft.TextField(label="Default period length (days)", value=str(dp),
-                              border_radius=14, border_color=T.PRIMARY,
+                              border_radius=T.sc(14), border_color=T.PRIMARY,
                               text_align=ft.TextAlign.CENTER,
                               input_filter=ft.NumbersOnlyInputFilter())
 
@@ -361,36 +378,36 @@ class CycleApp:
             self._toast("Saved")
             self.render()
 
-        profile = T.card(ft.Column(spacing=14, horizontal_alignment=C, controls=[
+        profile = T.card(ft.Column(spacing=T.sc(14), horizontal_alignment=C, controls=[
             self._sec_label("PROFILE"), name_tf,
             ft.Row(alignment=ft.MainAxisAlignment.CENTER,
                    controls=[ft.Text("Birthday", color=T.MUTED), bday_btn]),
         ]))
-        prefs = T.card(ft.Column(spacing=14, horizontal_alignment=C, controls=[
+        prefs = T.card(ft.Column(spacing=T.sc(14), horizontal_alignment=C, controls=[
             self._sec_label("CYCLE PREFERENCES"),
             ft.Text("Used for predictions until you've logged enough history.",
-                    size=12, color=T.MUTED, text_align=ft.TextAlign.CENTER),
+                    size=T.sc(12), color=T.MUTED, text_align=ft.TextAlign.CENTER),
             cyc_tf, per_tf,
         ]))
         save_btn = ft.Row(alignment=ft.MainAxisAlignment.CENTER,
                           controls=[T.pill("Save", icon=ft.Icons.CHECK, on_click=save_prefs)])
 
-        appearance = T.card(ft.Column(spacing=12, horizontal_alignment=C, controls=[
+        appearance = T.card(ft.Column(spacing=T.sc(12), horizontal_alignment=C, controls=[
             self._sec_label("APPEARANCE"),
             ft.Text("Theme", color=T.ON_SURFACE, weight=ft.FontWeight.W_600,
                     text_align=ft.TextAlign.CENTER),
-            ft.Row(wrap=True, spacing=16, run_spacing=14,
+            ft.Row(wrap=True, spacing=T.sc(16), run_spacing=T.sc(14),
                    alignment=ft.MainAxisAlignment.SPACE_EVENLY,
                    controls=[self._theme_swatch(n) for n in T.THEMES]),
         ]))
 
-        lock = T.card(ft.Column(spacing=12, horizontal_alignment=C, controls=[
+        lock = T.card(ft.Column(spacing=T.sc(12), horizontal_alignment=C, controls=[
             self._sec_label("APP LOCK"),
             ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
-                ft.Icon(ft.Icons.LOCK_OUTLINE, color=T.PRIMARY, size=20),
+                ft.Icon(ft.Icons.LOCK_OUTLINE, color=T.PRIMARY, size=T.sc(20)),
                 ft.Text("PIN lock " + ("enabled" if self.db.has_pin() else "off"),
                         color=T.ON_SURFACE, weight=ft.FontWeight.W_600)]),
-            ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=10, controls=(
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=T.sc(10), controls=(
                 [ft.OutlinedButton("Change PIN", style=T.obtn_style(),
                                    on_click=lambda e: self._pin_dialog(True)),
                  ft.TextButton("Remove PIN", on_click=self._remove_pin)]
@@ -399,9 +416,9 @@ class CycleApp:
             )),
         ]))
 
-        data = T.card(ft.Column(spacing=12, horizontal_alignment=C, controls=[
+        data = T.card(ft.Column(spacing=T.sc(12), horizontal_alignment=C, controls=[
             self._sec_label("DATA"),
-            ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=10, controls=[
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=T.sc(10), controls=[
                 ft.OutlinedButton("Load sample data", icon=ft.Icons.DATASET,
                                   style=T.obtn_style(), on_click=self._load_sample),
                 ft.TextButton("Delete all data", icon=ft.Icons.DELETE_FOREVER,
@@ -409,25 +426,25 @@ class CycleApp:
             ]),
         ]))
 
-        about = T.card(ft.Column(spacing=8, horizontal_alignment=C, controls=[
+        about = T.card(ft.Column(spacing=T.sc(8), horizontal_alignment=C, controls=[
             self._sec_label("ABOUT"),
-            ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=10, controls=[
-                ft.Icon(ft.Icons.FAVORITE, color=T.C_PERIOD, size=22),
-                ft.Column(spacing=0, horizontal_alignment=C, controls=[
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=T.sc(10), controls=[
+                ft.Icon(ft.Icons.FAVORITE, color=T.C_PERIOD, size=T.sc(22)),
+                ft.Column(spacing=T.sc(0), horizontal_alignment=C, controls=[
                     ft.Text("Petal", color=T.ON_SURFACE,
-                            weight=ft.FontWeight.BOLD, size=15),
-                    ft.Text(f"Version {APP_VERSION}", color=T.MUTED, size=12),
+                            weight=ft.FontWeight.BOLD, size=T.sc(15)),
+                    ft.Text(f"Version {APP_VERSION}", color=T.MUTED, size=T.sc(12)),
                 ]),
             ]),
             ft.Text("A private period and cycle tracker — log periods, symptoms "
                     "and moods, and see your phase, fertile window and next-period "
                     "predictions at a glance. Your data stays on your device.",
-                    size=13, color=T.MUTED, text_align=ft.TextAlign.CENTER),
+                    size=T.sc(13), color=T.MUTED, text_align=ft.TextAlign.CENTER),
         ]))
 
         return ft.Container(
-            padding=ft.padding.only(left=16, right=16, top=16, bottom=24),
-            content=ft.Column(spacing=14, controls=[
+            padding=ft.padding.only(left=T.sc(16), right=T.sc(16), top=T.sc(16), bottom=T.sc(24)),
+            content=ft.Column(spacing=T.sc(14), controls=[
                 ft.Row([T.h1("Settings")], alignment=ft.MainAxisAlignment.CENTER),
                 profile, prefs, save_btn, appearance, lock, data, about]))
 
@@ -435,19 +452,19 @@ class CycleApp:
         pal = T.THEMES[name]
         active = self.db.get_setting("theme", "Lavender") == name
         return ft.Column(
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=4,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=T.sc(4),
             controls=[
                 ft.Container(
-                    width=52, height=52, border_radius=26,
+                    width=T.sc(52), height=T.sc(52), border_radius=T.sc(26),
                     gradient=ft.LinearGradient(begin=ft.alignment.top_left,
                                                end=ft.alignment.bottom_right,
                                                colors=pal["hero"]),
                     border=ft.border.all(3, T.PRIMARY if active else "#00000000"),
                     on_click=lambda e, n=name: self._set_theme(n),
-                    content=(ft.Icon(ft.Icons.CHECK, color=pal["on_hero"], size=22)
+                    content=(ft.Icon(ft.Icons.CHECK, color=pal["on_hero"], size=T.sc(22))
                              if active else None),
                     alignment=ft.alignment.center),
-                ft.Text(name, size=11, color=T.MUTED),
+                ft.Text(name, size=T.sc(11), color=T.MUTED),
             ])
 
     def _set_theme(self, name: str):
@@ -463,12 +480,12 @@ class CycleApp:
         p1 = ft.TextField(label="Enter PIN", password=True, can_reveal_password=True,
                           keyboard_type=ft.KeyboardType.NUMBER, max_length=6,
                           border_color=T.PRIMARY,
-                          input_filter=ft.NumbersOnlyInputFilter(), border_radius=14)
+                          input_filter=ft.NumbersOnlyInputFilter(), border_radius=T.sc(14))
         p2 = ft.TextField(label="Confirm PIN", password=True, can_reveal_password=True,
                           keyboard_type=ft.KeyboardType.NUMBER, max_length=6,
                           border_color=T.PRIMARY,
-                          input_filter=ft.NumbersOnlyInputFilter(), border_radius=14)
-        err = ft.Text("", color=T.C_PERIOD, size=12, visible=False)
+                          input_filter=ft.NumbersOnlyInputFilter(), border_radius=T.sc(14))
+        err = ft.Text("", color=T.C_PERIOD, size=T.sc(12), visible=False)
 
         def _save(e):
             v = p1.value or ""
@@ -485,7 +502,7 @@ class CycleApp:
 
         dlg = ft.AlertDialog(
             modal=True, title=ft.Text("Change PIN" if change else "Set PIN"),
-            content=ft.Column([p1, p2, err], tight=True, spacing=12, width=300),
+            content=ft.Column([p1, p2, err], tight=True, spacing=T.sc(12), width=T.sc(300)),
             actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.close(dlg)),
                      ft.FilledButton("Save", on_click=_save)])
         self.page.open(dlg)
@@ -504,16 +521,17 @@ class CycleApp:
         self.page.open(dlg)
 
     def _show_lock(self):
+        self._mode = "lock"
         self._chrome(False)
         self.page.appbar = None
         self.body.gradient = T.hero_gradient()
         pin_tf = ft.TextField(
-            password=True, can_reveal_password=True, width=220,
+            password=True, can_reveal_password=True, width=T.sc(220),
             text_align=ft.TextAlign.CENTER, keyboard_type=ft.KeyboardType.NUMBER,
             max_length=6, input_filter=ft.NumbersOnlyInputFilter(),
             border_color=T.ON_HERO, color=T.ON_HERO,
             hint_text="PIN", hint_style=ft.TextStyle(color=T.alpha(T.ON_HERO, 0.7)))
-        err = ft.Text("", color="#FFCDD2", size=13, visible=False)
+        err = ft.Text("", color="#FFCDD2", size=T.sc(13), visible=False)
 
         def unlock(e=None):
             if self.db.check_pin(pin_tf.value or ""):
@@ -528,10 +546,10 @@ class CycleApp:
             alignment=ft.alignment.center,
             content=ft.Column(
                 alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=18,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=T.sc(18),
                 controls=[
-                    ft.Icon(ft.Icons.LOCK, color=T.ON_HERO, size=48),
-                    ft.Text("Enter your PIN", color=T.ON_HERO, size=20,
+                    ft.Icon(ft.Icons.LOCK, color=T.ON_HERO, size=T.sc(48)),
+                    ft.Text("Enter your PIN", color=T.ON_HERO, size=T.sc(20),
                             weight=ft.FontWeight.BOLD),
                     pin_tf, err,
                     T.pill("Unlock", icon=ft.Icons.LOCK_OPEN, on_click=unlock,
@@ -585,6 +603,8 @@ class CycleApp:
     # ---- log form ------------------------------------------------------
     def open_log(self, entry: Optional[PeriodEntry] = None):
         editing = entry is not None
+        self._mode = "form"
+        self._form_entry = entry
         st = {"start": entry.start_date if editing else date.today(),
               "end": entry.end_date if editing else None}
 
@@ -603,13 +623,13 @@ class CycleApp:
 
         flow_dd = ft.Dropdown(label="Flow", value=entry.flow if editing else "Medium",
                               options=[ft.dropdown.Option(f) for f in FLOW_LEVELS],
-                              border_radius=14, border_color=T.PRIMARY)
+                              border_radius=T.sc(14), border_color=T.PRIMARY)
         mood_dd = ft.Dropdown(label="Mood", value=entry.mood if editing else "",
                               options=[ft.dropdown.Option(key="", text="— None —")] +
                               [ft.dropdown.Option(m) for m in MOODS],
-                              border_radius=14, border_color=T.PRIMARY)
+                              border_radius=T.sc(14), border_color=T.PRIMARY)
         notes_tf = ft.TextField(label="Notes", multiline=True, min_lines=2, max_lines=4,
-                                border_radius=14, border_color=T.PRIMARY,
+                                border_radius=T.sc(14), border_color=T.PRIMARY,
                                 value=entry.notes if editing else "")
 
         selected = set(entry.symptoms) if editing else set()
@@ -638,18 +658,18 @@ class CycleApp:
                 self.page.update(); return
             self.render()
 
-        form = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True, spacing=16,
+        form = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True, spacing=T.sc(16),
                          horizontal_alignment=ft.CrossAxisAlignment.STRETCH, controls=[
-            T.card(ft.Column(spacing=14, controls=[
-                ft.Row([ft.Text("Start", width=70, color=T.MUTED), start_btn]),
-                ft.Row([ft.Text("End", width=70, color=T.MUTED), end_btn,
+            T.card(ft.Column(spacing=T.sc(14), controls=[
+                ft.Row([ft.Text("Start", width=T.sc(70), color=T.MUTED), start_btn]),
+                ft.Row([ft.Text("End", width=T.sc(70), color=T.MUTED), end_btn,
                         ft.TextButton("Clear",
                                       on_click=lambda e: (st.update(end=None), sync()))]),
             ])),
-            T.card(ft.Column(spacing=14, controls=[flow_dd, mood_dd])),
-            T.card(ft.Column(spacing=10, controls=[
+            T.card(ft.Column(spacing=T.sc(14), controls=[flow_dd, mood_dd])),
+            T.card(ft.Column(spacing=T.sc(10), controls=[
                 T.label("SYMPTOMS"),
-                ft.Row(chips, wrap=True, spacing=6, run_spacing=6)])),
+                ft.Row(chips, wrap=True, spacing=T.sc(6), run_spacing=T.sc(6))])),
             T.card(notes_tf), err,
             ft.Row(alignment=ft.MainAxisAlignment.END, controls=[
                 ft.TextButton("Cancel", on_click=lambda e: self.render()),

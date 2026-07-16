@@ -1,4 +1,4 @@
-# Petal · v1.2.0
+# Petal · v2.0.0
 
 A period / cycle tracking app built with **Flet + SQLite** (mobile target).
 Managed with **uv** (Python 3.13).
@@ -15,6 +15,7 @@ A Flo-inspired, four-screen experience with soft-pastel theming:
 - **Cycle phase card** — shows your current phase (Menstrual / Follicular /
   Ovulation / Luteal) with a rotating hormone fun-fact (FSH, estrogen, LH,
   progesterone).
+- **Responsive scaling** — text, icons and controls scale with the viewport width (mobile-first, tuned for phones and tablets) and re-flow live on resize.
 - **Settings** — profile (name, birthday), cycle-length preferences, an
   **Appearance** section with six pastel themes (Lavender, Coral, Teal, Baby
   blue, Storm, Pale), an **App lock** PIN, data actions, and About.
@@ -27,6 +28,9 @@ A Flo-inspired, four-screen experience with soft-pastel theming:
 Six selectable pastel palettes, persisted in the DB and applied at startup.
 Changing a theme re-tints the primary colour, gradients, FAB and nav; the hero
 ring adapts its ink so it stays legible on light themes.
+
+## Responsive
+Mobile-first. A global scale factor (`theme.sc`) is derived from the viewport width (clamped 0.85–1.35×) and applied to every font, icon and control; the UI re-renders on window resize so it stays polished from small phones to tablets.
 
 ## Project layout
 ```
