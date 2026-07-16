@@ -1,0 +1,31 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# ---- uv / virtualenv ----
+.venv/
+venv/
+# NOTE: uv.lock IS committed (reproducible installs for an application)
+
+# ---- App runtime data ----
+period_tracker.db
+period_tracker.db-journal
+*.sqlite
+*.sqlite3
+
+# ---- Flet build artifacts ----
+.flet/
+*.apk
+*.aab
+*.ipa
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
