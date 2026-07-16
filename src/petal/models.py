@@ -10,7 +10,7 @@ FLOW_LEVELS = ["Light", "Medium", "Heavy"]
 MOODS = ["Happy", "Calm", "Sad", "Irritable", "Anxious", "Energetic", "Tired"]
 SYMPTOMS = [
     "Cramps", "Headache", "Bloating", "Fatigue", "Backache",
-    "Tender breasts", "Acne", "Nausea", "Cravings",
+    "Tender breasts", "Acne", "Nausea", "Cravings", "Diarrhea",
 ]
 
 

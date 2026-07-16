@@ -17,8 +17,9 @@ period_tracker.db-journal
 *.sqlite
 *.sqlite3
 
-# ---- Flet build artifacts ----
+# ---- Flet build/runtime artifacts ----
 .flet/
+storage/
 *.apk
 *.aab
 *.ipa

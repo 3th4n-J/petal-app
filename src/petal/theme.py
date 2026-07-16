@@ -109,3 +109,9 @@ def h1(text: str, color: str = ON_SURFACE) -> ft.Text:
 def label(text: str, color: str = MUTED) -> ft.Text:
     return ft.Text(text, size=12, weight=ft.FontWeight.W_600, color=color,
                    style=ft.TextStyle(letter_spacing=0.5))
+
+
+def obtn_style() -> ft.ButtonStyle:
+    """Outlined-button style whose border follows the active theme."""
+    return ft.ButtonStyle(side=ft.BorderSide(1.4, PRIMARY), color=PRIMARY,
+                          shape=ft.RoundedRectangleBorder(radius=14))

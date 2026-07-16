@@ -1,4 +1,4 @@
-"""Flo-inspired Flet UI: bottom-nav shell over Today, Calendar, Insights, Settings."""
+"""Flo-inspired Flet UI: docked-FAB bottom bar over Today, Calendar, Insights, Settings."""
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -16,6 +16,13 @@ from .seed import SAMPLE
 
 
 class CycleApp:
+    _NAV = [
+        (0, ft.Icons.FAVORITE_BORDER, ft.Icons.FAVORITE, "Today"),
+        (1, ft.Icons.CALENDAR_MONTH_OUTLINED, ft.Icons.CALENDAR_MONTH, "Calendar"),
+        (2, ft.Icons.INSIGHTS_OUTLINED, ft.Icons.INSIGHTS, "Insights"),
+        (3, ft.Icons.SETTINGS_OUTLINED, ft.Icons.SETTINGS, "Settings"),
+    ]
+
     def __init__(self, page: ft.Page):
         self.page = page
         self.db = Database()
@@ -31,12 +38,12 @@ class CycleApp:
         page.window_width, page.window_height = 430, 880
 
         self.body = ft.Container(expand=True, gradient=T.page_gradient())
-        page.navigation_bar = self._nav()
         page.floating_action_button = ft.FloatingActionButton(
             icon=ft.Icons.ADD, bgcolor=T.ACCENT, foreground_color="white",
             shape=ft.CircleBorder(), on_click=lambda e: self.open_log())
         page.floating_action_button_location = \
             ft.FloatingActionButtonLocation.CENTER_DOCKED
+        page.bottom_appbar = self._bottom_bar()
         page.add(self.body)
 
         if self.db.has_pin():
@@ -44,35 +51,49 @@ class CycleApp:
         else:
             self.render()
 
-    # ---- shell ---------------------------------------------------------
-    def _nav(self) -> ft.NavigationBar:
-        return ft.NavigationBar(
-            selected_index=self.index, bgcolor=T.SURFACE,
-            indicator_color=T.LILAC, on_change=self._on_nav,
-            destinations=[
-                ft.NavigationBarDestination(icon=ft.Icons.FAVORITE_BORDER,
-                                            selected_icon=ft.Icons.FAVORITE, label="Today"),
-                ft.NavigationBarDestination(icon=ft.Icons.CALENDAR_MONTH_OUTLINED,
-                                            selected_icon=ft.Icons.CALENDAR_MONTH,
-                                            label="Calendar"),
-                ft.NavigationBarDestination(icon=ft.Icons.INSIGHTS_OUTLINED,
-                                            selected_icon=ft.Icons.INSIGHTS, label="Insights"),
-                ft.NavigationBarDestination(icon=ft.Icons.SETTINGS_OUTLINED,
-                                            selected_icon=ft.Icons.SETTINGS, label="Settings"),
-            ],
-        )
+    # ---- bottom app bar (docked FAB notch) -----------------------------
+    def _nav_item(self, idx, icon, sel_icon, lbl) -> ft.Control:
+        active = self.index == idx
+        return ft.Container(
+            on_click=lambda e, i=idx: self._select(i),
+            border_radius=16, padding=ft.padding.symmetric(horizontal=14, vertical=6),
+            bgcolor=T.alpha(T.PRIMARY, 0.14) if active else None,
+            content=ft.Column(
+                spacing=2, tight=True,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Icon(sel_icon if active else icon,
+                            color=T.PRIMARY if active else T.MUTED, size=22),
+                    ft.Text(lbl, size=11, color=T.PRIMARY if active else T.MUTED,
+                            weight=ft.FontWeight.W_600 if active else ft.FontWeight.W_500),
+                ]))
 
-    def _on_nav(self, e):
-        self.index = e.control.selected_index
+    def _bottom_bar(self) -> ft.BottomAppBar:
+        items = [self._nav_item(*n) for n in self._NAV]
+        return ft.BottomAppBar(
+            bgcolor=T.SURFACE, shape=ft.NotchShape.CIRCULAR, notch_margin=8,
+            height=72, padding=ft.padding.symmetric(horizontal=10),
+            content=ft.Row(
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Row(items[:2], spacing=4),
+                    ft.Container(width=52),  # gap for the docked FAB notch
+                    ft.Row(items[2:], spacing=4),
+                ]))
+
+    def _select(self, i: int):
+        self.index = i
         self.render()
 
     def _chrome(self, show: bool):
-        """Show/hide bottom nav + FAB (hidden on the lock screen / log form)."""
-        self.page.navigation_bar.visible = show
+        """Show/hide bottom bar + FAB (hidden on the lock screen / log form)."""
+        self.page.bottom_appbar.visible = show
         self.page.floating_action_button.visible = show
 
     def render(self):
         self.page.appbar = None
+        self.page.bottom_appbar = self._bottom_bar()
         self._chrome(True)
         self.body.gradient = T.hero_gradient() if self.index == 0 else T.page_gradient()
         view = [self._home, self._calendar, self._insights, self._settings][self.index]()
@@ -99,7 +120,7 @@ class CycleApp:
                 "Good evening" if h < 21 else "Good night")
         return f"{part}, {who}"
 
-    # ---- Today (full-bleed) --------------------------------------------
+    # ---- Today (full-bleed, centered) ----------------------------------
     def _home(self) -> ft.Control:
         s = self._stats()
         today = date.today()
@@ -117,9 +138,11 @@ class CycleApp:
                 ft.Text(today.strftime("%A, %d %B").upper(), size=12,
                         color=T.alpha(T.ON_HERO, 0.85), weight=ft.FontWeight.W_600,
                         style=ft.TextStyle(letter_spacing=1.2)),
-                W.cycle_ring(s, size=260),
-                T.pill("Log period", icon=ft.Icons.WATER_DROP,
-                       on_click=lambda e: self.open_log(), filled=False),
+                ft.Row([W.cycle_ring(s, size=260)],
+                       alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([T.pill("Log period", icon=ft.Icons.WATER_DROP,
+                               on_click=lambda e: self.open_log(), filled=False)],
+                       alignment=ft.MainAxisAlignment.CENTER),
             ],
         )
 
@@ -141,7 +164,9 @@ class CycleApp:
 
         return ft.Container(
             padding=ft.padding.only(left=18, right=18, top=18, bottom=28),
-            content=ft.Column(spacing=18, controls=[hero, insight, tiles]))
+            content=ft.Column(
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=18, controls=[hero, insight, tiles]))
 
     @staticmethod
     def _info_row(icon, icon_color, label, value) -> ft.Control:
@@ -250,10 +275,10 @@ class CycleApp:
 
     # ---- Settings ------------------------------------------------------
     def _settings(self) -> ft.Control:
-        name_tf = ft.TextField(label="Name", border_radius=14,
+        name_tf = ft.TextField(label="Name", border_radius=14, border_color=T.PRIMARY,
                                value=self.db.get_setting("profile_name", ""))
         bday = {"d": self._parse_iso(self.db.get_setting("profile_birthday"))}
-        bday_btn = ft.OutlinedButton(icon=ft.Icons.CAKE_OUTLINED)
+        bday_btn = ft.OutlinedButton(icon=ft.Icons.CAKE_OUTLINED, style=T.obtn_style())
 
         def sync_bday():
             bday_btn.text = bday["d"].strftime("%d %b %Y") if bday["d"] else "Not set"
@@ -264,9 +289,11 @@ class CycleApp:
 
         dc, dp = self._defaults()
         cyc_tf = ft.TextField(label="Default cycle length (days)", value=str(dc),
-                              border_radius=14, input_filter=ft.NumbersOnlyInputFilter())
+                              border_radius=14, border_color=T.PRIMARY,
+                              input_filter=ft.NumbersOnlyInputFilter())
         per_tf = ft.TextField(label="Default period length (days)", value=str(dp),
-                              border_radius=14, input_filter=ft.NumbersOnlyInputFilter())
+                              border_radius=14, border_color=T.PRIMARY,
+                              input_filter=ft.NumbersOnlyInputFilter())
 
         def save_prefs(e):
             self.db.set_setting("profile_name", name_tf.value or "")
@@ -303,7 +330,8 @@ class CycleApp:
                     ft.Text("PIN lock " + ("enabled" if self.db.has_pin() else "off"),
                             color=T.ON_SURFACE, weight=ft.FontWeight.W_600)]),
             ft.Row(spacing=10, controls=(
-                [ft.OutlinedButton("Change PIN", on_click=lambda e: self._pin_dialog(True)),
+                [ft.OutlinedButton("Change PIN", style=T.obtn_style(),
+                                   on_click=lambda e: self._pin_dialog(True)),
                  ft.TextButton("Remove PIN", on_click=self._remove_pin)]
                 if self.db.has_pin() else
                 [T.pill("Set PIN", icon=ft.Icons.PIN, on_click=lambda e: self._pin_dialog())]
@@ -314,7 +342,7 @@ class CycleApp:
             T.label("DATA"),
             ft.Row(spacing=10, controls=[
                 ft.OutlinedButton("Load sample data", icon=ft.Icons.DATASET,
-                                  on_click=self._load_sample),
+                                  style=T.obtn_style(), on_click=self._load_sample),
                 ft.TextButton("Delete all data", icon=ft.Icons.DELETE_FOREVER,
                               on_click=self._confirm_clear_all),
             ]),
@@ -366,16 +394,17 @@ class CycleApp:
         T.apply_theme(name)
         self.page.theme = T.app_theme()
         self.page.bgcolor = T.BG
-        self.page.navigation_bar = self._nav()
         self.render()
 
     # ---- PIN / lock ----------------------------------------------------
     def _pin_dialog(self, change: bool = False):
         p1 = ft.TextField(label="Enter PIN", password=True, can_reveal_password=True,
                           keyboard_type=ft.KeyboardType.NUMBER, max_length=6,
+                          border_color=T.PRIMARY,
                           input_filter=ft.NumbersOnlyInputFilter(), border_radius=14)
         p2 = ft.TextField(label="Confirm PIN", password=True, can_reveal_password=True,
                           keyboard_type=ft.KeyboardType.NUMBER, max_length=6,
+                          border_color=T.PRIMARY,
                           input_filter=ft.NumbersOnlyInputFilter(), border_radius=14)
         err = ft.Text("", color=T.C_PERIOD, size=12, visible=False)
 
@@ -497,8 +526,8 @@ class CycleApp:
         st = {"start": entry.start_date if editing else date.today(),
               "end": entry.end_date if editing else None}
 
-        start_btn = ft.OutlinedButton(icon=ft.Icons.CALENDAR_MONTH)
-        end_btn = ft.OutlinedButton(icon=ft.Icons.CALENDAR_MONTH)
+        start_btn = ft.OutlinedButton(icon=ft.Icons.CALENDAR_MONTH, style=T.obtn_style())
+        end_btn = ft.OutlinedButton(icon=ft.Icons.CALENDAR_MONTH, style=T.obtn_style())
 
         def sync():
             start_btn.text = st["start"].strftime("%d %b %Y")
@@ -512,12 +541,14 @@ class CycleApp:
 
         flow_dd = ft.Dropdown(label="Flow", value=entry.flow if editing else "Medium",
                               options=[ft.dropdown.Option(f) for f in FLOW_LEVELS],
-                              border_radius=14)
+                              border_radius=14, border_color=T.PRIMARY)
         mood_dd = ft.Dropdown(label="Mood", value=entry.mood if editing else "",
-                              options=[ft.dropdown.Option("")] +
-                              [ft.dropdown.Option(m) for m in MOODS], border_radius=14)
+                              options=[ft.dropdown.Option(key="", text="— None —")] +
+                              [ft.dropdown.Option(m) for m in MOODS],
+                              border_radius=14, border_color=T.PRIMARY)
         notes_tf = ft.TextField(label="Notes", multiline=True, min_lines=2, max_lines=4,
-                                border_radius=14, value=entry.notes if editing else "")
+                                border_radius=14, border_color=T.PRIMARY,
+                                value=entry.notes if editing else "")
 
         selected = set(entry.symptoms) if editing else set()
         chips = []
