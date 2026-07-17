@@ -75,13 +75,13 @@ def app_theme() -> ft.Theme:
 
 
 def page_gradient() -> ft.LinearGradient:
-    return ft.LinearGradient(begin=ft.alignment.top_center,
-                             end=ft.alignment.bottom_center, colors=[BG, _BG2])
+    return ft.LinearGradient(begin=ft.Alignment.TOP_CENTER,
+                             end=ft.Alignment.BOTTOM_CENTER, colors=[BG, _BG2])
 
 
 def hero_gradient() -> ft.LinearGradient:
-    return ft.LinearGradient(begin=ft.alignment.top_left,
-                             end=ft.alignment.bottom_right, colors=_HERO)
+    return ft.LinearGradient(begin=ft.Alignment.TOP_LEFT,
+                             end=ft.Alignment.BOTTOM_RIGHT, colors=_HERO)
 
 
 def card(content: ft.Control, **kw) -> ft.Container:
@@ -96,10 +96,10 @@ def card(content: ft.Control, **kw) -> ft.Container:
 def pill(text: str, icon=None, on_click=None, filled: bool = True) -> ft.Control:
     style = ft.ButtonStyle(
         shape=ft.RoundedRectangleBorder(radius=sc(30)),
-        padding=ft.padding.symmetric(horizontal=sc(24), vertical=sc(18)),
+        padding=ft.Padding.symmetric(horizontal=sc(24), vertical=sc(18)),
         bgcolor=PRIMARY if filled else SURFACE,
         color="white" if filled else PRIMARY, elevation={"": 0})
-    return ft.FilledButton(text=text, icon=icon, on_click=on_click, style=style)
+    return ft.FilledButton(content=text, icon=icon, on_click=on_click, style=style)
 
 
 def h1(text: str, color: str = ON_SURFACE) -> ft.Text:
@@ -119,8 +119,8 @@ def obtn_style() -> ft.ButtonStyle:
 
 def fab_gradient() -> ft.LinearGradient:
     """A soft gradient for the add button, drawn from the active theme."""
-    return ft.LinearGradient(begin=ft.alignment.top_left,
-                             end=ft.alignment.bottom_right, colors=[PRIMARY, ACCENT])
+    return ft.LinearGradient(begin=ft.Alignment.TOP_LEFT,
+                             end=ft.Alignment.BOTTOM_RIGHT, colors=[PRIMARY, ACCENT])
 
 
 # ---- responsive scaling -------------------------------------------------

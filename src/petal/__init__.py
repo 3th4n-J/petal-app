@@ -1,2 +1,2 @@
 """Petal — a Flet + SQLite period tracking app."""
-__version__ = "2.3.0"
+__version__ = "3.0.1"

@@ -36,10 +36,13 @@ class CycleApp:
         page.theme = T.app_theme()
         page.bgcolor = T.BG
         page.padding = 0
-        page.window_width, page.window_height = 430, 880
+        try:
+            page.window.width, page.window.height = 430, 880
+        except Exception:
+            pass
         self._mode = "main"
         self._form_entry = None
-        T.set_scale(page.width or page.window_width)
+        T.set_scale(page.width or 430)
         page.on_resize = self._on_resize
 
         self.body = ft.Container(expand=True, gradient=T.page_gradient())
@@ -66,7 +69,7 @@ class CycleApp:
         return center - self._pill_w / 2
 
     def _build_nav(self) -> ft.BottomAppBar:
-        barW = self.page.width or self.page.window_width or 430
+        barW = self.page.width or 430
         self._slotW = barW / 5.0
         self._pill_w = min(self._slotW * 0.82, T.sc(80))
         self._pill_h = T.sc(52)
@@ -89,7 +92,7 @@ class CycleApp:
             self._nav_icons.append(ic)
             self._nav_labels.append(lb)
             cells.append(ft.Container(
-                width=self._slotW, alignment=ft.alignment.center,
+                width=self._slotW, alignment=ft.Alignment.CENTER,
                 on_click=lambda e, k=i: self._select(k),
                 content=ft.Column([ic, lb], spacing=2, tight=True,
                                   alignment=ft.MainAxisAlignment.CENTER,
@@ -97,15 +100,15 @@ class CycleApp:
         row = ft.Row(spacing=0, controls=[
             cells[0], cells[1], ft.Container(width=self._slotW), cells[2], cells[3]])
         return ft.BottomAppBar(
-            bgcolor=T.SURFACE, shape=ft.NotchShape.CIRCULAR, notch_margin=T.sc(8),
-            height=bar_h, padding=0, elevation=24, surface_tint_color="#00000000",
+            bgcolor=T.SURFACE, shape=ft.CircularRectangleNotchShape(), notch_margin=T.sc(8),
+            height=bar_h, padding=0, elevation=24,
             shadow_color=T.alpha(T.PRIMARY_DEEP, 0.65),
             content=ft.Stack([self._pill, row]))
 
     def _sync_nav(self):
         for i, (idx, icon, sel_icon, lbl) in enumerate(self._NAV):
             active = i == self.index
-            self._nav_icons[i].name = sel_icon if active else icon
+            self._nav_icons[i].icon = sel_icon if active else icon
             self._nav_icons[i].color = T.PRIMARY if active else T.MUTED
             self._nav_labels[i].color = T.PRIMARY if active else T.MUTED
             self._nav_labels[i].weight = (ft.FontWeight.W_600 if active
@@ -117,7 +120,7 @@ class CycleApp:
         # content container while the FAB itself stays transparent (keeps the notch).
         return ft.FloatingActionButton(
             content=ft.Container(
-                width=T.sc(56), height=T.sc(56), border_radius=T.sc(28), alignment=ft.alignment.center,
+                width=T.sc(56), height=T.sc(56), border_radius=T.sc(28), alignment=ft.Alignment.CENTER,
                 gradient=T.fab_gradient(),
                 content=ft.Icon(ft.Icons.ADD, color="white", size=T.sc(26))),
             bgcolor="#00000000", elevation=0, shape=ft.CircleBorder(),
@@ -159,7 +162,7 @@ class CycleApp:
         self.page.update()
 
     def _toast(self, msg: str):
-        self.page.open(ft.SnackBar(ft.Text(msg), bgcolor=T.PRIMARY_DEEP))
+        self.page.show_dialog(ft.SnackBar(ft.Text(msg), bgcolor=T.PRIMARY_DEEP))
 
     def _defaults(self):
         return (self.db.get_int("default_cycle", cs.DEFAULT_CYCLE_DAYS),
@@ -221,7 +224,7 @@ class CycleApp:
         ])
 
         return ft.Container(
-            padding=ft.padding.only(left=T.sc(18), right=T.sc(18), top=T.sc(18), bottom=T.sc(28)),
+            padding=ft.Padding.only(left=T.sc(18), right=T.sc(18), top=T.sc(18), bottom=T.sc(28)),
             content=ft.Column(
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=T.sc(18), controls=[hero, insight, tiles, self._phase_card(s)]))
@@ -295,7 +298,7 @@ class CycleApp:
             W.calendar_legend(),
         ]))
         return ft.Container(
-            padding=ft.padding.only(left=T.sc(16), right=T.sc(16), top=T.sc(16), bottom=T.sc(24)),
+            padding=ft.Padding.only(left=T.sc(16), right=T.sc(16), top=T.sc(16), bottom=T.sc(24)),
             content=ft.Column(spacing=T.sc(14), controls=[header, grid]))
 
     # ---- Insights ------------------------------------------------------
@@ -317,11 +320,11 @@ class CycleApp:
             history += [self._entry_card(e) for e in entries]
         else:
             history.append(ft.Container(
-                padding=24, alignment=ft.alignment.center,
+                padding=24, alignment=ft.Alignment.CENTER,
                 content=ft.Text("No entries yet — tap + to log a period.",
                                 color=T.MUTED)))
         return ft.Container(
-            padding=ft.padding.only(left=T.sc(16), right=T.sc(16), top=T.sc(16), bottom=T.sc(24)),
+            padding=ft.Padding.only(left=T.sc(16), right=T.sc(16), top=T.sc(16), bottom=T.sc(24)),
             content=ft.Column(spacing=T.sc(14), controls=[
                 T.h1("Insights"), tiles, tiles2, ft.Container(height=T.sc(4)), *history]))
 
@@ -357,7 +360,7 @@ class CycleApp:
     def _confirm_delete(self, entry: PeriodEntry):
         def _do(e):
             self.db.delete(entry.id)
-            self.page.close(dlg)
+            self.page.pop_dialog()
             self._toast("Moved to trash")
             self.render()
         dlg = ft.AlertDialog(
@@ -365,9 +368,9 @@ class CycleApp:
             content=ft.Text(f"The period starting "
                             f"{entry.start_date.strftime('%d %b %Y')} moves to Trash "
                             f"and is deleted after 30 days."),
-            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.close(dlg)),
+            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.pop_dialog()),
                      ft.FilledButton("Move to trash", on_click=_do)])
-        self.page.open(dlg)
+        self.page.show_dialog(dlg)
 
     # ---- Settings (centered content) -----------------------------------
     @staticmethod
@@ -383,7 +386,7 @@ class CycleApp:
         bday_btn = ft.OutlinedButton(icon=ft.Icons.CAKE_OUTLINED, style=T.obtn_style())
 
         def sync_bday():
-            bday_btn.text = bday["d"].strftime("%d %b %Y") if bday["d"] else "Not set"
+            bday_btn.content = bday["d"].strftime("%d %b %Y") if bday["d"] else "Not set"
             self.page.update()
         bday_btn.on_click = lambda e: self._pick_date(
             bday["d"] or date(2000, 1, 1), lambda d: (bday.update(d=d), sync_bday()))
@@ -453,12 +456,12 @@ class CycleApp:
                                   icon=ft.Icons.DELETE_SWEEP_OUTLINED,
                                   style=T.obtn_style(),
                                   on_click=lambda e: self._show_trash())]),
-            ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=T.sc(10), controls=[
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
                 ft.OutlinedButton("Load sample data", icon=ft.Icons.DATASET,
-                                  style=T.obtn_style(), on_click=self._load_sample),
+                                  style=T.obtn_style(), on_click=self._load_sample)]),
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
                 ft.TextButton("Delete all data", icon=ft.Icons.DELETE_FOREVER,
-                              on_click=self._confirm_clear_all),
-            ]),
+                              on_click=self._confirm_clear_all)]),
             ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
                 ft.TextButton("Reset app", icon=ft.Icons.RESTART_ALT,
                               on_click=self._confirm_reset)]),
@@ -481,7 +484,7 @@ class CycleApp:
         ]))
 
         return ft.Container(
-            padding=ft.padding.only(left=T.sc(16), right=T.sc(16), top=T.sc(16), bottom=T.sc(24)),
+            padding=ft.Padding.only(left=T.sc(16), right=T.sc(16), top=T.sc(16), bottom=T.sc(24)),
             content=ft.Column(spacing=T.sc(14), controls=[
                 ft.Row([T.h1("Settings")], alignment=ft.MainAxisAlignment.CENTER),
                 profile, prefs, save_btn, appearance, lock, data, about]))
@@ -494,14 +497,14 @@ class CycleApp:
             controls=[
                 ft.Container(
                     width=T.sc(52), height=T.sc(52), border_radius=T.sc(26),
-                    gradient=ft.LinearGradient(begin=ft.alignment.top_left,
-                                               end=ft.alignment.bottom_right,
+                    gradient=ft.LinearGradient(begin=ft.Alignment.TOP_LEFT,
+                                               end=ft.Alignment.BOTTOM_RIGHT,
                                                colors=pal["hero"]),
-                    border=ft.border.all(3, T.PRIMARY if active else "#00000000"),
+                    border=ft.Border.all(3, T.PRIMARY if active else "#00000000"),
                     on_click=lambda e, n=name: self._set_theme(n),
                     content=(ft.Icon(ft.Icons.CHECK, color=pal["on_hero"], size=T.sc(22))
                              if active else None),
-                    alignment=ft.alignment.center),
+                    alignment=ft.Alignment.CENTER),
                 ft.Text(name, size=T.sc(11), color=T.MUTED),
             ])
 
@@ -535,29 +538,29 @@ class CycleApp:
                 err.value, err.visible = "PINs don't match.", True
                 self.page.update(); return
             self.db.set_pin(v)
-            self.page.close(dlg)
+            self.page.pop_dialog()
             self._toast("PIN updated")
             self.render()
 
         dlg = ft.AlertDialog(
             modal=True, title=ft.Text("Change PIN" if change else "Set PIN"),
             content=ft.Column([p1, p2, err], tight=True, spacing=T.sc(12), width=T.sc(300)),
-            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.close(dlg)),
+            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.pop_dialog()),
                      ft.FilledButton("Save", on_click=_save)])
-        self.page.open(dlg)
+        self.page.show_dialog(dlg)
 
     def _remove_pin(self, e):
         def _do(ev):
             self.db.clear_pin()
-            self.page.close(dlg)
+            self.page.pop_dialog()
             self._toast("PIN removed")
             self.render()
         dlg = ft.AlertDialog(
             modal=True, title=ft.Text("Remove PIN?"),
             content=ft.Text("The app will no longer be locked."),
-            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.close(dlg)),
+            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.pop_dialog()),
                      ft.FilledButton("Remove", on_click=_do)])
-        self.page.open(dlg)
+        self.page.show_dialog(dlg)
 
     def _show_lock(self):
         self._mode = "lock"
@@ -582,7 +585,7 @@ class CycleApp:
         pin_tf.on_submit = unlock
 
         self.body.content = ft.Container(
-            alignment=ft.alignment.center,
+            alignment=ft.Alignment.CENTER,
             content=ft.Column(
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=T.sc(18),
@@ -614,15 +617,15 @@ class CycleApp:
     def _confirm_clear_all(self, e):
         def _do(ev):
             self.db.clear_entries()
-            self.page.close(dlg)
+            self.page.pop_dialog()
             self._toast("All entries deleted")
             self.render()
         dlg = ft.AlertDialog(
             modal=True, title=ft.Text("Delete all data?"),
             content=ft.Text("This permanently removes every logged period."),
-            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.close(dlg)),
+            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.pop_dialog()),
                      ft.FilledButton("Delete all", on_click=_do)])
-        self.page.open(dlg)
+        self.page.show_dialog(dlg)
 
     def _confirm_reset(self, e):
         def _do(ev):
@@ -636,16 +639,16 @@ class CycleApp:
             self.page.bgcolor = T.BG
             self.page.bottom_appbar = self._build_nav()
             self.page.floating_action_button = self._fab()
-            self.page.close(dlg)
+            self.page.pop_dialog()
             self._toast("App reset to defaults")
             self.render()
         dlg = ft.AlertDialog(
             modal=True, title=ft.Text("Reset app?"),
             content=ft.Text("This clears all logged data and restores default "
                             "settings, theme and PIN. This can't be undone."),
-            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.close(dlg)),
+            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.pop_dialog()),
                      ft.FilledButton("Reset", on_click=_do)])
-        self.page.open(dlg)
+        self.page.show_dialog(dlg)
 
     @staticmethod
     def _parse_iso(s: Optional[str]) -> Optional[date]:
@@ -660,7 +663,7 @@ class CycleApp:
             if dp.value:
                 on_pick(dp.value.date() if hasattr(dp.value, "date") else dp.value)
         dp.on_change = _ch
-        self.page.open(dp)
+        self.page.show_dialog(dp)
 
     # ---- trash ---------------------------------------------------------
     def _show_trash(self):
@@ -672,7 +675,7 @@ class CycleApp:
         if trash:
             items = [self._trash_card(e) for e in trash]
         else:
-            items = [ft.Container(padding=T.sc(24), alignment=ft.alignment.center,
+            items = [ft.Container(padding=T.sc(24), alignment=ft.Alignment.CENTER,
                                   content=ft.Text("Trash is empty.", color=T.MUTED))]
         header = ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, controls=[
             ft.Text("Items are permanently deleted after 30 days.",
@@ -721,28 +724,28 @@ class CycleApp:
     def _confirm_hard_delete(self, entry: PeriodEntry):
         def _do(ev):
             self.db.hard_delete(entry.id)
-            self.page.close(dlg)
+            self.page.pop_dialog()
             self._toast("Deleted permanently")
             self._show_trash()
         dlg = ft.AlertDialog(
             modal=True, title=ft.Text("Delete forever?"),
             content=ft.Text("This entry will be permanently deleted. This can't be undone."),
-            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.close(dlg)),
+            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.pop_dialog()),
                      ft.FilledButton("Delete forever", on_click=_do)])
-        self.page.open(dlg)
+        self.page.show_dialog(dlg)
 
     def _confirm_empty_trash(self, e):
         def _do(ev):
             self.db.empty_trash()
-            self.page.close(dlg)
+            self.page.pop_dialog()
             self._toast("Trash emptied")
             self._show_trash()
         dlg = ft.AlertDialog(
             modal=True, title=ft.Text("Empty trash?"),
             content=ft.Text("Permanently delete everything in Trash. This can't be undone."),
-            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.close(dlg)),
+            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.pop_dialog()),
                      ft.FilledButton("Empty trash", on_click=_do)])
-        self.page.open(dlg)
+        self.page.show_dialog(dlg)
 
     # ---- log form ------------------------------------------------------
     def open_log(self, entry: Optional[PeriodEntry] = None):
@@ -756,8 +759,8 @@ class CycleApp:
         end_btn = ft.OutlinedButton(icon=ft.Icons.CALENDAR_MONTH, style=T.obtn_style())
 
         def sync():
-            start_btn.text = st["start"].strftime("%d %b %Y")
-            end_btn.text = st["end"].strftime("%d %b %Y") if st["end"] else "Not set"
+            start_btn.content = st["start"].strftime("%d %b %Y")
+            end_btn.content = st["end"].strftime("%d %b %Y") if st["end"] else "Not set"
             self.page.update()
 
         start_btn.on_click = lambda e: self._pick_date(

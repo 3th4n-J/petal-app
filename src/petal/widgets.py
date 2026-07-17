@@ -66,7 +66,7 @@ def cycle_ring(stats: cs.CycleStats, size: Optional[float] = None) -> ft.Control
     )
     return ft.Container(
         width=size, height=size,
-        content=ft.Stack([ring, ft.Container(center, alignment=ft.alignment.center,
+        content=ft.Stack([ring, ft.Container(center, alignment=ft.Alignment.CENTER,
                                              width=size, height=size)]),
     )
 
@@ -79,14 +79,14 @@ def phase_chip(phase: Optional[str]) -> ft.Control:
         content=ft.Text(f"{phase} phase", color="white", size=T.sc(13),
                         weight=ft.FontWeight.W_600),
         bgcolor=color, border_radius=T.sc(20),
-        padding=ft.padding.symmetric(horizontal=T.sc(16), vertical=T.sc(8)),
+        padding=ft.Padding.symmetric(horizontal=T.sc(16), vertical=T.sc(8)),
     )
 
 
 def stat_tile(value: str, caption: str) -> ft.Control:
     return ft.Container(
         expand=True, height=T.sc(92), padding=T.sc(12), border_radius=T.sc(18),
-        bgcolor=T.SURFACE, alignment=ft.alignment.center,
+        bgcolor=T.SURFACE, alignment=ft.Alignment.CENTER,
         content=ft.Column(spacing=2, tight=True,
                           alignment=ft.MainAxisAlignment.CENTER,
                           horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -129,9 +129,9 @@ def _day_cell(day: int, cat: Optional[str], is_today: bool) -> ft.Control:
                   color="white" if dark and fill else T.ON_SURFACE,
                   weight=ft.FontWeight.BOLD if is_today else ft.FontWeight.W_500)
     return ft.Container(
-        width=d, height=d, alignment=ft.alignment.center, content=txt,
+        width=d, height=d, alignment=ft.Alignment.CENTER, content=txt,
         bgcolor=fill, border_radius=d / 2,
-        border=ft.border.all(T.sc(2), T.PRIMARY) if is_today else None,
+        border=ft.Border.all(T.sc(2), T.PRIMARY) if is_today else None,
     )
 
 
@@ -140,7 +140,7 @@ def calendar_grid(year: int, month: int, day_map: Dict[date, str],
     d = T.sc(38)
     head = ft.Row(
         alignment=ft.MainAxisAlignment.SPACE_AROUND,
-        controls=[ft.Container(width=d, alignment=ft.alignment.center,
+        controls=[ft.Container(width=d, alignment=ft.Alignment.CENTER,
                                content=ft.Text(wd, size=T.sc(11), color=T.MUTED,
                                                weight=ft.FontWeight.W_600))
                   for wd in ["M", "T", "W", "T", "F", "S", "S"]],

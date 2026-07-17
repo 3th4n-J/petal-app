@@ -7,4 +7,4 @@ import flet as ft
 from petal.ui import main
 
 if __name__ == "__main__":
-    ft.app(target=main, assets_dir="assets")
+    ft.run(main, assets_dir="assets")

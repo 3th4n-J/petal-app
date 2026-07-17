@@ -11,7 +11,7 @@ ASSETS_DIR = str(Path(__file__).resolve().parents[2] / "assets")
 
 
 def run() -> None:
-    ft.app(target=main, assets_dir=ASSETS_DIR)
+    ft.run(main, assets_dir=ASSETS_DIR)
 
 
 if __name__ == "__main__":
