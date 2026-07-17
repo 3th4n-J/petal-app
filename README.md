@@ -163,7 +163,7 @@ Petal is **offline-first and account-free**. Your entries, symptoms and settings
 
 ## 🙏 Author
 
-Made with love by **Ethan Johnston** · Durban Overall.
+Made with love by **Ethan Johnston**.
 
 > Built for my angel ❤️ — may it be a small, gentle help every day.
 
