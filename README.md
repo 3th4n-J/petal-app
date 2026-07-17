@@ -1,105 +1,174 @@
-# Petal · v3.1.0
+<div align="center">
 
-A period / cycle tracking app built with **Flet + SQLite** (mobile target).
-Managed with **uv** (Python 3.13). Built on **Flet 0.85**.
+<img src="assets/icon.png" width="120" alt="Petal icon" />
 
-## What it does
-A Flo-inspired, four-screen experience with soft-pastel theming:
+# Petal
 
-- **Today** — a time-of-day greeting (reads your profile name), a full-bleed
-  hero cycle ring (current cycle day + next-period countdown), phase chip,
-  ovulation / fertile-window / next-period card, and quick stats.
-- **Calendar** — month grid with dots for logged period, predicted period,
-  fertile window, and ovulation; month navigation and a legend.
-- **Insights** — average cycle & period length, cycles logged, editable history.
-- **Cycle phase card** — shows your current phase (Menstrual / Follicular /
-  Ovulation / Luteal) with a rotating hormone fun-fact (FSH, estrogen, LH,
-  progesterone).
-- **Responsive scaling** — text, icons and controls scale with the viewport width (mobile-first, tuned for phones and tablets) and re-flow live on resize.
-- **Settings** — profile (name, birthday), cycle-length preferences, an
-  **Appearance** section with six pastel themes (Lavender, Coral, Teal, Baby
-  blue, Storm, Pale), an **App lock** PIN, data actions, and About.
-- Centered **+** button to log periods (start/end, flow, mood, symptoms, notes),
-  edit and delete. Predictions, phases and the fertile window are all derived.
-- **App lock**: set a PIN in Settings and the app shows a lock screen on launch.
-  The PIN is stored salted + SHA-256 hashed, never in clear text.
-- **Update checker** — on launch, checks the GitHub repo's latest release; if a newer version exists, Settings shows an **Update** button that opens the release page.
-- **Trash (30-day retention)** — deleting an entry moves it to Trash (with a confirmation); restore it or delete it forever, and it's auto-purged after 30 days. **Reset app** in Settings restores all defaults after confirming.
+**Your cycle, gently tracked — private, offline, and beautifully simple.**
 
-## Theming
-Six selectable pastel palettes, persisted in the DB and applied at startup.
-Changing a theme re-tints the primary colour, gradients, FAB and nav; the hero
-ring adapts its ink so it stays legible on light themes.
+[![Version](https://img.shields.io/badge/version-3.1.0-7C4DFF)](https://github.com/3th4n-J/petal-app/releases)
+[![Platform](https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white)](https://github.com/3th4n-J/petal-app/releases)
+[![Built with Flet](https://img.shields.io/badge/built%20with-Flet-00C8FF)](https://flet.dev)
+[![Python](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)](https://www.python.org)
+[![Offline](https://img.shields.io/badge/offline-first-2E7D32)](#-privacy)
 
-## Responsive
-Mobile-first. A global scale factor (`theme.sc`) is derived from the viewport width (clamped 0.85–1.35×) and applied to every font, icon and control; the UI re-renders on window resize so it stays polished from small phones to tablets.
+<em>Track your cycle with calm, clarity, and care.</em>
 
-## Animations
-Playful motion: the bottom-nav active "box" is a rounded highlight on the active tab that cross-fades between tabs, screens cross-fade on switch, and the pill re-tints/repositions on theme change and resize.
+</div>
 
-## Project layout
+---
+
+## ✨ Overview
+
+**Petal** is a private, offline-first period and cycle tracker. Log your periods, symptoms and moods, and see your current phase, fertile window and next-period prediction at a glance — wrapped in a soft, Flo-inspired design with six pastel themes.
+
+No accounts. No servers. No tracking. Your data lives on your device.
+
+> 🌸 Built with care to be a calm, everyday companion.
+
+---
+
+## 📸 Screenshots
+
+<div align="center">
+
+| Today | Calendar | Insights | Log period |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/screenshots/today.png" width="180"/> | <img src="docs/screenshots/calendar.png" width="180"/> | <img src="docs/screenshots/insights.png" width="180"/> | <img src="docs/screenshots/log.png" width="180"/> |
+
+</div>
+
+---
+
+## 🚀 Features
+
+### 🌸 Today at a Glance
+- **Cycle ring** — current cycle day with a live *"period in N days"* countdown.
+- **Personal greeting** — a casual, time-of-day hello that reads your profile name.
+- **Phase & fertility card** — current phase chip plus ovulation, fertile window and next-period dates.
+- **Current phase card** — Menstrual / Follicular / Ovulation / Luteal, with a rotating **hormone fun-fact** (FSH, estrogen, LH, progesterone).
+- **Quick stats** — average cycle length, average period length, cycles logged.
+
+### 📅 Calendar
+- Month grid with colour-coded dots: **logged period**, **predicted period**, **fertile window** and **ovulation**.
+- Month-to-month navigation and a clear legend.
+
+### 📈 Insights
+- Averages and totals at a glance, plus your full, **editable history**.
+
+### 📝 Logging
+- Log **start/end dates**, **flow**, **mood**, **symptoms** (themed chips) and **notes**.
+- Edit or delete any entry; predictions, phases and the fertile window are all **derived automatically**.
+
+### 🗑️ Trash (30-day retention)
+- Deleting an entry moves it to **Trash** (with a confirmation) — restore it or delete it forever.
+- Auto-purged after 30 days.
+
+### 🎨 Theming
+- **Six pastel palettes** — Lavender, Coral, Teal, Baby blue, Storm and Pale.
+- Themes re-tint everything: primary colour, gradients, the gradient **+** button, nav highlight and fields.
+
+### 📱 Responsive & Animated
+- **Mobile-first scaling** — text, icons and controls scale with the viewport (phones → tablets) and re-flow on resize.
+- Cross-fading nav highlight, smooth screen transitions, and a docked gradient action button.
+
+### 🔒 Private & Secure
+- **PIN app-lock** — set a PIN and Petal shows a lock screen on launch. PINs are **salted + SHA-256 hashed**, never stored in plaintext.
+- **Local-first** — all data stays on-device.
+
+### 🔄 Up to Date
+- **In-app update checker** — checks the GitHub repo for a newer release and offers a one-tap **Update** button that opens the download page.
+
+---
+
+## 🛠️ Tech Stack
+
+| | |
+|---|---|
+| **Language** | Python 3.13 |
+| **UI** | [Flet](https://flet.dev) 0.85 (Flutter under the hood) |
+| **Storage** | SQLite — `period_tracker.db` (entries + settings) |
+| **Networking** | httpx (update check only) |
+| **Tooling** | [uv](https://github.com/astral-sh/uv) for env & builds |
+| **Packaging** | `src/` layout + Hatchling |
+
+---
+
+## 🏁 Getting Started (development)
+
+```bash
+# 1. Install uv (https://github.com/astral-sh/uv), then sync deps
+uv sync
+
+# 2. Run on desktop for quick iteration
+uv run flet run main.py
+
+# 3. Optional: load a few sample cycles
+uv run python -m petal.seed
+
+# 4. Build a signed Android APK (see Release workflow below)
+uv run flet build apk
+```
+
+> **Note:** runtime deps stay lean — only `flet` is bundled into the APK. The Flet CLI, web/desktop server and the `websockets` fix live in the `dev` dependency group (installed by uv, never shipped to the device).
+
+---
+
+## 📦 Release Workflow
+
+Two helper scripts (`build-release.ps1` is git-ignored — it holds the keystore path) make releases a two-step affair:
+
+```powershell
+# Build a signed APK — prompts for the keystore password, auto-increments versionCode
+.\build-release.ps1
+
+# Commit, tag (vX.Y.Z), push, and publish the GitHub release
+.\create-release.ps1            # prompts once for a message used as commit + release notes
+.\create-release.ps1 -Build     # chain both: build then release
+```
+
+Signing uses a local release keystore (`petal-release.jks`, git-ignored). Releases are published to the app repo, where the in-app update checker looks for them.
+
+📥 **Download the latest APK:** [github.com/3th4n-J/petal-app/releases](https://github.com/3th4n-J/petal-app/releases)
+
+---
+
+## 🗂️ Project Structure
+
 ```
 PT/
-├── pyproject.toml            # project metadata + deps (uv)
-├── .python-version           # pins 3.13
-├── uv.lock                   # generated by `uv lock` (see Setup)
-├── main.py                   # Flet entry stub for `flet run` / `flet build`
-├── assets/
-│   └── icon.png              # app / launcher icon (used by `flet build`)
-└── src/petal/
-    ├── __init__.py
-    ├── __main__.py           # `python -m petal` / `uv run petal`
-    ├── models.py             # PeriodEntry dataclass + option lists
-    ├── db.py                 # SQLite schema + Database data-access layer (CRUD)
-    ├── cycle_stats.py        # predictions, phases, fertile window, calendar map
-    ├── theme.py              # 6 pastel palettes, runtime theme switching, cards/pills
-    ├── widgets.py            # canvas cycle ring, stat tiles, calendar grid
-    ├── ui.py                 # bottom-nav shell + Today/Calendar/Insights/Settings + lock
-    └── seed.py               # loads ~5 sample cycles for a quick demo
+├─ main.py                 # entry point for `flet run` / `flet build`
+├─ pyproject.toml          # uv project (runtime: flet · dev: flet[all] + websockets)
+├─ assets/
+│  └─ icon.png             # app / launcher icon
+└─ src/petal/
+   ├─ __init__.py          # version
+   ├─ __main__.py          # `python -m petal` / `uv run petal`
+   ├─ models.py            # PeriodEntry dataclass + option lists
+   ├─ db.py                # SQLite data layer (CRUD, settings, trash, PIN)
+   ├─ cycle_stats.py       # predictions, phases, fertile window, calendar map
+   ├─ theme.py             # 6 pastel palettes, responsive scaling, cards/pills
+   ├─ widgets.py           # canvas cycle ring, stat tiles, calendar grid
+   ├─ ui.py                # nav shell + Today/Calendar/Insights/Settings + lock + updates
+   └─ seed.py              # sample data loader
 ```
 
-The `settings` table (key-value) stores profile, theme, cycle defaults, and the
-hashed PIN alongside the `period_entries` table.
+---
 
-## Data model
-Single table `period_entries`, keyed on a unique `start_date` (ISO `yyyy-mm-dd`):
+## 🔐 Privacy
 
-```
-id INTEGER PK
-start_date TEXT UNIQUE   end_date TEXT
-flow TEXT                mood TEXT
-symptoms TEXT (csv)      notes TEXT
-created_at TEXT          updated_at TEXT
-deleted_at TEXT          -- NULL = active; set = in Trash (30-day retention)
-```
+Petal is **offline-first and account-free**. Your entries, symptoms and settings never leave your device. The only network request is an optional check to GitHub for app updates.
 
-Prediction = last start date + average gap between consecutive starts
-(falls back to 28 days until enough history exists).
+---
 
-## Setup & run (uv)
-> Depends on `flet[all]` — this pulls in `flet-cli` (the `flet run`/`flet build`
-> commands) plus the desktop and web runtimes. Plain `flet` omits these.
-> Note: uv venvs have no `pip`; use `uv pip install ...`, not `uv run pip ...`.
+## 🙏 Author
 
-```bash
-uv lock                          # generate uv.lock (first time only)
-uv sync                          # create .venv from the lock (installs flet-cli)
+Made with love by **Ethan Johnston** · Durban Overall.
 
-uv run python -m petal.seed   # optional: load sample data
-uv run flet run main.py               # desktop window
-uv run flet run --web main.py         # browser
-uv run petal                  # console-script entry point
-```
+> Built for my angel ❤️ — may it be a small, gentle help every day.
 
-## Build for mobile
-```bash
-uv run flet build apk            # Android
-uv run flet build ipa            # iOS (needs macOS + Xcode)
-```
-The DB file `period_tracker.db` is created in the current working directory. On
-device, override the location with the `PERIOD_DB` env var or by passing
-`db_path` to `Database()`.
+---
 
-## Next steps (not in this first pass)
-- Mobile-safe DB path (Flet per-app storage dir).
-- Daily symptom logging (separate from
+<div align="center">
+<sub>© 2026 Ethan Johnston · Petal</sub>
+</div>
