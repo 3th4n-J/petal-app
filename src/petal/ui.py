@@ -747,13 +747,9 @@ class CycleApp:
         self.page.show_dialog(dlg)
 
     def _symptom_chip(self, name: str, selected: set) -> ft.Control:
-        TL, BR = ft.Alignment.TOP_LEFT, ft.Alignment.BOTTOM_RIGHT
-
         def paint(c, on):
-            c.gradient = ft.LinearGradient(
-                begin=TL, end=BR,
-                colors=([T.alpha(T.PRIMARY, 0.35), T.alpha(T.LILAC, 0.55)] if on
-                        else [T.SURFACE, T.alpha(T.PRIMARY, 0.12)]))
+            # flat, light theme tint (stronger when selected)
+            c.bgcolor = T.alpha(T.PRIMARY, 0.20 if on else 0.08)
             row = []
             if on:
                 row.append(ft.Icon(ft.Icons.CHECK, size=T.sc(15), color=T.PRIMARY_DEEP))
