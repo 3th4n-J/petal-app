@@ -421,9 +421,9 @@ class CycleApp:
             ft.Text("Used for predictions until you've logged enough history.",
                     size=T.sc(12), color=T.MUTED, text_align=ft.TextAlign.CENTER),
             cyc_tf, per_tf,
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER,
+                   controls=[T.pill("Save", icon=ft.Icons.CHECK, on_click=save_prefs)]),
         ]))
-        save_btn = ft.Row(alignment=ft.MainAxisAlignment.CENTER,
-                          controls=[T.pill("Save", icon=ft.Icons.CHECK, on_click=save_prefs)])
 
         appearance = T.card(ft.Column(spacing=T.sc(12), horizontal_alignment=C, controls=[
             self._sec_label("APPEARANCE"),
@@ -487,7 +487,7 @@ class CycleApp:
             padding=ft.Padding.only(left=T.sc(16), right=T.sc(16), top=T.sc(16), bottom=T.sc(24)),
             content=ft.Column(spacing=T.sc(14), controls=[
                 ft.Row([T.h1("Settings")], alignment=ft.MainAxisAlignment.CENTER),
-                profile, prefs, save_btn, appearance, lock, data, about]))
+                profile, prefs, appearance, lock, data, about]))
 
     def _theme_swatch(self, name: str) -> ft.Control:
         pal = T.THEMES[name]
