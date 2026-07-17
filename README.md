@@ -1,4 +1,4 @@
-# Petal · v3.0.19
+# Petal · v3.1.0
 
 A period / cycle tracking app built with **Flet + SQLite** (mobile target).
 Managed with **uv** (Python 3.13). Built on **Flet 0.85**.
@@ -23,6 +23,7 @@ A Flo-inspired, four-screen experience with soft-pastel theming:
   edit and delete. Predictions, phases and the fertile window are all derived.
 - **App lock**: set a PIN in Settings and the app shows a lock screen on launch.
   The PIN is stored salted + SHA-256 hashed, never in clear text.
+- **Update checker** — on launch, checks the GitHub repo's latest release; if a newer version exists, Settings shows an **Update** button that opens the release page.
 - **Trash (30-day retention)** — deleting an entry moves it to Trash (with a confirmation); restore it or delete it forever, and it's auto-purged after 30 days. **Reset app** in Settings restores all defaults after confirming.
 
 ## Theming

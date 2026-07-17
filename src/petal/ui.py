@@ -1,6 +1,7 @@
 """Flo-inspired Flet UI: docked-FAB bottom bar over Today, Calendar, Insights, Settings."""
 from __future__ import annotations
 
+import threading
 from datetime import date, datetime
 from typing import Optional
 
@@ -13,6 +14,11 @@ from . import widgets as W
 from .db import Database
 from .models import FLOW_LEVELS, MOODS, SYMPTOMS, PeriodEntry
 from .seed import SAMPLE
+
+
+REPO = "3th4n-J/petal-app"
+RELEASES_API = f"https://api.github.com/repos/{REPO}/releases/latest"
+RELEASES_PAGE = f"https://github.com/{REPO}/releases/latest"
 
 
 class CycleApp:
@@ -57,10 +63,13 @@ class CycleApp:
         page.bottom_appbar = self._build_nav()
         page.add(self.body)
 
+        self._update_state = "checking"   # checking | latest | available | error
+        self._update_latest = None
         if self.db.has_pin():
             self._show_lock()
         else:
             self.render()
+        threading.Thread(target=self._check_update, daemon=True).start()
 
     # ---- bottom app bar (docked FAB notch) -----------------------------
     def _build_nav(self) -> ft.BottomAppBar:
@@ -406,6 +415,78 @@ class CycleApp:
                      ft.FilledButton("Move to trash", on_click=_do)])
         self.page.show_dialog(dlg)
 
+    # ---- update checker ------------------------------------------------
+    @staticmethod
+    def _parse_ver(s: str):
+        s = (s or "").strip().lstrip("vV")
+        out = []
+        for part in s.split("."):
+            digits = "".join(ch for ch in part if ch.isdigit())
+            out.append(int(digits) if digits else 0)
+        return tuple(out) if out else (0,)
+
+    def _check_update(self):
+        try:
+            import httpx
+            r = httpx.get(RELEASES_API, timeout=8,
+                          headers={"Accept": "application/vnd.github+json"})
+            if r.status_code == 200:
+                tag = (r.json() or {}).get("tag_name", "") or ""
+                self._update_latest = tag
+                self._update_state = ("available"
+                    if self._parse_ver(tag) > self._parse_ver(APP_VERSION) else "latest")
+            elif r.status_code == 404:
+                self._update_state = "latest"   # repo has no releases yet
+            else:
+                self._update_state = "error"
+        except Exception:
+            self._update_state = "error"
+        try:
+            if self._mode == "main" and self.index == 3:
+                self.render()
+        except Exception:
+            pass
+
+    def _recheck_update(self):
+        self._update_state = "checking"
+        self.render()
+        threading.Thread(target=self._check_update, daemon=True).start()
+
+    def _updates_card(self) -> ft.Control:
+        CE = ft.MainAxisAlignment.CENTER
+        rows = [self._sec_label("APP UPDATES")]
+        st = self._update_state
+        if st == "checking":
+            rows.append(ft.Row(alignment=CE, spacing=T.sc(8), controls=[
+                ft.ProgressRing(width=T.sc(16), height=T.sc(16), stroke_width=2,
+                                color=T.PRIMARY),
+                ft.Text("Checking for updates…", size=T.sc(13), color=T.MUTED)]))
+        elif st == "available":
+            rows.append(ft.Row(alignment=CE, spacing=T.sc(8), controls=[
+                ft.Icon(ft.Icons.SYSTEM_UPDATE, color=T.PRIMARY, size=T.sc(20)),
+                ft.Text(f"Update available: {self._update_latest}",
+                        color=T.ON_SURFACE, weight=ft.FontWeight.W_600, size=T.sc(14))]))
+            rows.append(ft.Text(f"You're on v{APP_VERSION}", size=T.sc(12), color=T.MUTED,
+                                text_align=ft.TextAlign.CENTER))
+            rows.append(ft.Row(alignment=CE, controls=[
+                T.pill("Update", icon=ft.Icons.SYSTEM_UPDATE,
+                       on_click=lambda e: self.page.launch_url(RELEASES_PAGE))]))
+        elif st == "latest":
+            rows.append(ft.Row(alignment=CE, spacing=T.sc(8), controls=[
+                ft.Icon(ft.Icons.CHECK_CIRCLE, color=T.C_OVULATION, size=T.sc(18)),
+                ft.Text(f"You're up to date (v{APP_VERSION})", size=T.sc(13),
+                        color=T.MUTED)]))
+        else:
+            rows.append(ft.Text("Couldn't check for updates.", size=T.sc(13),
+                                color=T.MUTED, text_align=ft.TextAlign.CENTER))
+            rows.append(ft.Row(alignment=CE, controls=[
+                ft.OutlinedButton("Check again", icon=ft.Icons.REFRESH,
+                                  style=T.obtn_style(),
+                                  on_click=lambda e: self._recheck_update())]))
+        return T.card(ft.Column(spacing=T.sc(10),
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                controls=rows))
+
     # ---- Settings (centered content) -----------------------------------
     @staticmethod
     def _sec_label(text: str) -> ft.Control:
@@ -519,7 +600,8 @@ class CycleApp:
             padding=ft.Padding.only(left=T.sc(16), right=T.sc(16), top=T.sc(16), bottom=T.sc(24)),
             content=ft.Column(spacing=T.sc(14), controls=[
                 ft.Row([T.h1("Settings")], alignment=ft.MainAxisAlignment.CENTER),
-                profile, prefs, appearance, lock, data, about]))
+                profile, prefs, appearance, self._updates_card(),
+                lock, data, about]))
 
     def _theme_swatch(self, name: str) -> ft.Control:
         pal = T.THEMES[name]
