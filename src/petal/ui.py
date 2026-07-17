@@ -449,22 +449,21 @@ class CycleApp:
             )),
         ]))
 
+        bw = T.sc(210)
         data = T.card(ft.Column(spacing=T.sc(12), horizontal_alignment=C, controls=[
             self._sec_label("DATA"),
             ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
                 ft.OutlinedButton(f"Trash ({len(self.db.list_trash())})",
-                                  icon=ft.Icons.DELETE_SWEEP_OUTLINED,
+                                  icon=ft.Icons.DELETE_SWEEP_OUTLINED, width=bw,
                                   style=T.obtn_style(),
                                   on_click=lambda e: self._show_trash())]),
             ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
-                ft.OutlinedButton("Load sample data", icon=ft.Icons.DATASET,
-                                  style=T.obtn_style(), on_click=self._load_sample)]),
+                ft.OutlinedButton("Delete all data", icon=ft.Icons.DELETE_FOREVER,
+                                  width=bw, style=T.obtn_style(),
+                                  on_click=self._confirm_clear_all)]),
             ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
-                ft.TextButton("Delete all data", icon=ft.Icons.DELETE_FOREVER,
-                              on_click=self._confirm_clear_all)]),
-            ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
-                ft.TextButton("Reset app", icon=ft.Icons.RESTART_ALT,
-                              on_click=self._confirm_reset)]),
+                ft.OutlinedButton("Reset app", icon=ft.Icons.RESTART_ALT, width=bw,
+                                  style=T.obtn_style(), on_click=self._confirm_reset)]),
         ]))
 
         about = T.card(ft.Column(spacing=T.sc(8), horizontal_alignment=C, controls=[
