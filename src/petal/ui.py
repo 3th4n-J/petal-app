@@ -476,10 +476,11 @@ class CycleApp:
                     ft.Text(f"Version {APP_VERSION}", color=T.MUTED, size=T.sc(12)),
                 ]),
             ]),
-            ft.Text("A private period and cycle tracker — log periods, symptoms "
+            ft.Text("A private period and cycle tracker built for my angel ❤️ — log periods, symptoms "
                     "and moods, and see your phase, fertile window and next-period "
-                    "predictions at a glance. Your data stays on your device.",
+                    "predictions at a glance.",
                     size=T.sc(13), color=T.MUTED, text_align=ft.TextAlign.CENTER),
+            ft.Text("Developed with love by: Ethan Johnston © 2026", size=T.sc(9), color=T.MUTED, text_align=ft.TextAlign.CENTER)
         ]))
 
         return ft.Container(
