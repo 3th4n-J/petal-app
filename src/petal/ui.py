@@ -71,10 +71,11 @@ class CycleApp:
     def _build_nav(self) -> ft.BottomAppBar:
         barW = self.page.width or 430
         self._slotW = barW / 5.0
-        self._pill_w = min(self._slotW * 0.82, T.sc(80))
-        self._pill_h = T.sc(52)
-        bar_h = T.sc(72)
-        self._pill_top = (bar_h - self._pill_h) / 2
+        self._pill_w = min(self._slotW * 0.86, T.sc(84))
+        self._pill_h = T.sc(50)
+        row_h = T.sc(58)                 # the icon+label row area
+        bottom_pad = T.sc(18)            # clears the phone home indicator
+        self._pill_top = (row_h - self._pill_h) / 2
         # The active "box" is a positioned pill that slides + springs between items.
         self._pill = ft.Container(
             width=self._pill_w, height=self._pill_h, border_radius=T.sc(16),
@@ -85,25 +86,34 @@ class CycleApp:
         self._nav_icons, self._nav_labels, cells = [], [], []
         for i, (idx, icon, sel_icon, lbl) in enumerate(self._NAV):
             active = i == self.index
-            ic = ft.Icon(sel_icon if active else icon, size=T.sc(22),
+            ic = ft.Icon(sel_icon if active else icon, size=T.sc(24),
                          color=T.PRIMARY if active else T.MUTED)
             lb = ft.Text(lbl, size=T.sc(11), color=T.PRIMARY if active else T.MUTED,
                          weight=ft.FontWeight.W_600 if active else ft.FontWeight.W_500)
             self._nav_icons.append(ic)
             self._nav_labels.append(lb)
             cells.append(ft.Container(
-                width=self._slotW, alignment=ft.Alignment.CENTER,
+                width=self._slotW, height=row_h, alignment=ft.Alignment.CENTER,
                 on_click=lambda e, k=i: self._select(k),
-                content=ft.Column([ic, lb], spacing=2, tight=True,
+                content=ft.Column([ic, lb], spacing=T.sc(3), tight=True,
                                   alignment=ft.MainAxisAlignment.CENTER,
                                   horizontal_alignment=ft.CrossAxisAlignment.CENTER)))
         row = ft.Row(spacing=0, controls=[
             cells[0], cells[1], ft.Container(width=self._slotW), cells[2], cells[3]])
         return ft.BottomAppBar(
             bgcolor=T.SURFACE, shape=ft.CircularRectangleNotchShape(), notch_margin=T.sc(8),
-            height=bar_h, padding=0, elevation=24,
-            shadow_color=T.alpha(T.PRIMARY_DEEP, 0.65),
-            content=ft.Stack([self._pill, row]))
+            height=row_h + bottom_pad, padding=ft.Padding.only(bottom=bottom_pad),
+            elevation=24, shadow_color=T.alpha(T.PRIMARY_DEEP, 0.65),
+            content=ft.Stack([self._pill, row], height=row_h))
+
+    def _nav_shadow(self) -> ft.Control:
+        # Thin transparent strip that casts a soft upward shadow -- a reliable
+        # separator above the bar (Material's M3 shadow doesn't paint on mobile).
+        return ft.Container(
+            height=T.sc(2), bgcolor="#00000000",
+            shadow=ft.BoxShadow(blur_radius=T.sc(10), spread_radius=0,
+                                color=T.alpha(T.PRIMARY_DEEP, 0.30),
+                                offset=ft.Offset(0, -T.sc(4))))
 
     def _sync_nav(self):
         for i, (idx, icon, sel_icon, lbl) in enumerate(self._NAV):
@@ -157,7 +167,9 @@ class CycleApp:
         self.body.gradient = T.hero_gradient() if self.index == 0 else T.page_gradient()
         view = [self._home, self._calendar, self._insights, self._settings][self.index]()
         self._switcher.content = ft.Column([view], scroll=ft.ScrollMode.AUTO, expand=True)
-        self.body.content = self._switcher
+        self.body.content = ft.Column(
+            [ft.Container(self._switcher, expand=True), self._nav_shadow()],
+            spacing=0, expand=True)
         self._sync_nav()
         self.page.update()
 

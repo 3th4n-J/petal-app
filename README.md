@@ -1,4 +1,4 @@
-# Petal · v3.0.13
+# Petal · v3.0.14
 
 A period / cycle tracking app built with **Flet + SQLite** (mobile target).
 Managed with **uv** (Python 3.13). Built on **Flet 0.85**.
