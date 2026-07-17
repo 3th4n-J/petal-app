@@ -1,4 +1,4 @@
-# Petal · v3.0.17
+# Petal · v3.0.18
 
 A period / cycle tracking app built with **Flet + SQLite** (mobile target).
 Managed with **uv** (Python 3.13). Built on **Flet 0.85**.
@@ -34,7 +34,7 @@ ring adapts its ink so it stays legible on light themes.
 Mobile-first. A global scale factor (`theme.sc`) is derived from the viewport width (clamped 0.85–1.35×) and applied to every font, icon and control; the UI re-renders on window resize so it stays polished from small phones to tablets.
 
 ## Animations
-Playful motion: the bottom-nav active "box" is a positioned pill that glides between tabs with a gentle overshoot, screens cross-fade on switch, and the pill re-tints/repositions on theme change and resize.
+Playful motion: the bottom-nav active "box" is a rounded highlight on the active tab that cross-fades between tabs, screens cross-fade on switch, and the pill re-tints/repositions on theme change and resize.
 
 ## Project layout
 ```

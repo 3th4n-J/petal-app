@@ -63,26 +63,9 @@ class CycleApp:
             self.render()
 
     # ---- bottom app bar (docked FAB notch) -----------------------------
-    def _pill_left(self, index: int) -> float:
-        slot = (0, 1, 3, 4)[index]          # centre slot (2) is the FAB notch
-        center = slot * self._slotW + self._slotW / 2
-        return center - self._pill_w / 2
-
     def _build_nav(self) -> ft.BottomAppBar:
-        barW = self.page.width or 430
-        self._slotW = barW / 5.0
-        row_h = T.sc(58)                 # the icon+label row area
-        self._pill_w = self._slotW - T.sc(8)   # span the cell (icon + label)
-        self._pill_h = row_h - T.sc(6)
-        self._pill_top = (row_h - self._pill_h) / 2
-        # The active "box" is a positioned pill that slides + springs between items.
-        self._pill = ft.Container(
-            width=self._pill_w, height=self._pill_h, border_radius=T.sc(18),
-            bgcolor=T.alpha(T.PRIMARY, 0.16),
-            left=self._pill_left(self.index), top=self._pill_top,
-            animate_position=ft.Animation(380, ft.AnimationCurve.EASE_OUT_BACK),
-            animate=ft.Animation(250, ft.AnimationCurve.EASE_OUT))
-        self._nav_icons, self._nav_labels, cells = [], [], []
+        row_h = T.sc(58)
+        self._nav_icons, self._nav_labels, self._nav_pills, cells = [], [], [], []
         for i, (idx, icon, sel_icon, lbl) in enumerate(self._NAV):
             active = i == self.index
             ic = ft.Icon(sel_icon if active else icon, size=T.sc(23),
@@ -90,22 +73,28 @@ class CycleApp:
             lb = ft.Text(lbl, size=T.sc(11), color=T.PRIMARY if active else T.MUTED,
                          weight=ft.FontWeight.W_600 if active else ft.FontWeight.W_500,
                          no_wrap=True)
-            self._nav_icons.append(ic)
-            self._nav_labels.append(lb)
-            cells.append(ft.Container(
-                expand=True, height=row_h, alignment=ft.Alignment.CENTER,
-                on_click=lambda e, k=i: self._select(k),
+            # the highlight IS the cell's background -> always hugs icon+label,
+            # always centred, and cross-fades via `animate`.
+            pill = ft.Container(
+                padding=ft.Padding.symmetric(horizontal=T.sc(14), vertical=T.sc(6)),
+                border_radius=T.sc(16),
+                bgcolor=T.alpha(T.PRIMARY, 0.16) if active else "#00000000",
+                animate=ft.Animation(240, ft.AnimationCurve.EASE_OUT),
                 content=ft.Column([ic, lb], spacing=T.sc(3), tight=True,
                                   alignment=ft.MainAxisAlignment.CENTER,
-                                  horizontal_alignment=ft.CrossAxisAlignment.CENTER)))
+                                  horizontal_alignment=ft.CrossAxisAlignment.CENTER))
+            self._nav_icons.append(ic)
+            self._nav_labels.append(lb)
+            self._nav_pills.append(pill)
+            cells.append(ft.Container(
+                expand=True, height=row_h, alignment=ft.Alignment.CENTER,
+                on_click=lambda e, k=i: self._select(k), content=pill))
         row = ft.Row(spacing=0, controls=[
             cells[0], cells[1], ft.Container(expand=True), cells[2], cells[3]])
         # SafeArea (bottom only) lifts the bar above the Android gesture bar /
-        # iOS home indicator instead of clipping into it. No fixed height -> the
-        # BottomAppBar grows to fit content + the system inset.
+        # iOS home indicator instead of clipping into it.
         bar_body = ft.SafeArea(
-            content=ft.Stack([self._pill, row], height=row_h),
-            avoid_intrusions_top=False, avoid_intrusions_left=False,
+            content=row, avoid_intrusions_top=False, avoid_intrusions_left=False,
             avoid_intrusions_right=False, avoid_intrusions_bottom=True)
         return ft.BottomAppBar(
             bgcolor=T.SURFACE, shape=ft.CircularRectangleNotchShape(), notch_margin=T.sc(8),
@@ -129,7 +118,7 @@ class CycleApp:
             self._nav_labels[i].color = T.PRIMARY if active else T.MUTED
             self._nav_labels[i].weight = (ft.FontWeight.W_600 if active
                                           else ft.FontWeight.W_500)
-        self._pill.left = self._pill_left(self.index)
+            self._nav_pills[i].bgcolor = T.alpha(T.PRIMARY, 0.16) if active else "#00000000"
 
     def _fab(self) -> ft.FloatingActionButton:
         # FABs only take a solid bgcolor, so the gradient lives in a circular
