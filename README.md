@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/icon.png" width="120" alt="Petal icon" />
+<img src="docs/screenshots/icon.png" width="120" alt="Petal icon" />
 
 # Petal
 
