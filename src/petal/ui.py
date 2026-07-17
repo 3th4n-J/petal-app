@@ -172,14 +172,31 @@ class CycleApp:
         dc, dp = self._defaults()
         return cs.compute(self.db.list_all(), default_cycle=dc, default_period=dp)
 
+    _GREETINGS = {
+        "morning": ["Morning, {who}! ☀️", "Rise and shine, {who} 🌸",
+                    "Hey {who}, morning! 🌞", "Top of the morning, {who} ☕",
+                    "Morning sunshine, {who} 🌻"],
+        "afternoon": ["Afternoon, {who}! 👋", "Hey {who}, how's the day? 🌼",
+                      "Hope you're smashing it, {who} 💪", "Good afternoon, {who} 😎",
+                      "Afternoon vibes, {who} 🍊"],
+        "evening": ["Evening, {who}! 🌙", "Hey {who}, good evening ✨",
+                    "Winding down, {who}? 🍵", "Evening, {who} 🌇",
+                    "Cosy evening, {who} 🕯️"],
+        "night": ["Night owl, {who}? 🦉", "Late one, {who}? 🌛",
+                  "Rest up, {who} 💤", "Sweet dreams soon, {who} 😊",
+                  "Get some sleep, {who} 😴"],
+    }
+
     def _greeting(self) -> str:
+        import random
         name = (self.db.get_setting("profile_name") or "").strip()
         who = name.split()[0] if name else "there"
         h = datetime.now().hour
-        part = ("Good morning" if h < 12 else
-                "Good afternoon" if h < 17 else
-                "Good evening" if h < 21 else "Good night")
-        return f"{part}, {who}"
+        slot = ("morning" if h < 12 else "afternoon" if h < 17 else
+                "evening" if h < 21 else "night")
+        # stable within a slot each day, but varies day to day
+        rng = random.Random(f"{date.today().isoformat()}-{slot}")
+        return rng.choice(self._GREETINGS[slot]).format(who=who)
 
     # ---- Today (full-bleed, centered) ----------------------------------
     def _home(self) -> ft.Control:
