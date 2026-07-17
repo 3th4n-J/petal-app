@@ -110,6 +110,14 @@ class CycleApp:
                                 color=T.alpha(T.PRIMARY_DEEP, 0.30),
                                 offset=ft.Offset(0, -T.sc(4))))
 
+    @staticmethod
+    def _safe(content: ft.Control) -> ft.Control:
+        # keeps full-screen views (log form, trash, lock) clear of the status bar
+        # and the Android gesture bar / iOS home indicator.
+        return ft.SafeArea(content=content, avoid_intrusions_top=False,
+                           avoid_intrusions_bottom=True,
+                           avoid_intrusions_left=True, avoid_intrusions_right=True)
+
     def _sync_nav(self):
         for i, (idx, icon, sel_icon, lbl) in enumerate(self._NAV):
             active = i == self.index
@@ -713,7 +721,7 @@ class CycleApp:
             title=ft.Text("Trash"), bgcolor=T.PRIMARY, color="white",
             leading=ft.IconButton(ft.Icons.ARROW_BACK, icon_color="white",
                                   on_click=lambda e: self._back_to_settings()))
-        self.body.content = ft.Container(col, padding=T.sc(16), expand=True)
+        self.body.content = self._safe(ft.Container(col, padding=T.sc(16), expand=True))
         self.page.update()
 
     def _back_to_settings(self):
@@ -885,7 +893,7 @@ class CycleApp:
             bgcolor=T.PRIMARY, color="white",
             leading=ft.IconButton(ft.Icons.ARROW_BACK_IOS_NEW, icon_color="white",
                                   on_click=lambda e: self._close_form()))
-        self.body.content = ft.Container(form, padding=16, expand=True)
+        self.body.content = self._safe(ft.Container(form, padding=T.sc(16), expand=True))
         self.page.update()
 
     def _close_form(self):
