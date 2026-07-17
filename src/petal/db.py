@@ -9,7 +9,7 @@ import hashlib
 import os
 import secrets
 import sqlite3
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import List, Optional
 
 from .models import PeriodEntry
@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS period_entries (
     symptoms    TEXT    NOT NULL DEFAULT '',       -- comma-separated
     notes       TEXT    NOT NULL DEFAULT '',
     created_at  TEXT    NOT NULL,
-    updated_at  TEXT    NOT NULL
+    updated_at  TEXT    NOT NULL,
+    deleted_at  TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_entries_start ON period_entries(start_date DESC);
 
@@ -58,7 +59,13 @@ class Database:
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.executescript(SCHEMA)
+        self._migrate()
         self.conn.commit()
+
+    def _migrate(self) -> None:
+        cols = {r["name"] for r in self.conn.execute("PRAGMA table_info(period_entries)")}
+        if "deleted_at" not in cols:
+            self.conn.execute("ALTER TABLE period_entries ADD COLUMN deleted_at TEXT")
 
     # ---- mapping helpers -------------------------------------------------
     @staticmethod
@@ -73,11 +80,16 @@ class Database:
             notes=row["notes"],
             created_at=_parse_dt(row["created_at"]),
             updated_at=_parse_dt(row["updated_at"]),
+            deleted_at=_parse_dt(row["deleted_at"]) if "deleted_at" in row.keys() else None,
         )
 
     # ---- CRUD ------------------------------------------------------------
     def add(self, entry: PeriodEntry) -> int:
         now = datetime.now().isoformat(timespec="seconds")
+        # a trashed row may still hold this date (UNIQUE start_date) -- clear it
+        self.conn.execute(
+            "DELETE FROM period_entries WHERE start_date=? AND deleted_at IS NOT NULL",
+            (_iso(entry.start_date),))
         cur = self.conn.execute(
             """INSERT INTO period_entries
                (start_date, end_date, flow, mood, symptoms, notes, created_at, updated_at)
@@ -102,7 +114,10 @@ class Database:
         self.conn.commit()
 
     def delete(self, entry_id: int) -> None:
-        self.conn.execute("DELETE FROM period_entries WHERE id=?", (entry_id,))
+        """Soft delete -> moves the entry to trash."""
+        now = datetime.now().isoformat(timespec="seconds")
+        self.conn.execute("UPDATE period_entries SET deleted_at=? WHERE id=?",
+                          (now, entry_id))
         self.conn.commit()
 
     def get(self, entry_id: int) -> Optional[PeriodEntry]:
@@ -114,13 +129,41 @@ class Database:
     def list_all(self) -> List[PeriodEntry]:
         """Newest first."""
         rows = self.conn.execute(
-            "SELECT * FROM period_entries ORDER BY start_date DESC"
+            "SELECT * FROM period_entries WHERE deleted_at IS NULL ORDER BY start_date DESC"
         ).fetchall()
         return [self._row_to_entry(r) for r in rows]
 
     def clear_entries(self) -> None:
         self.conn.execute("DELETE FROM period_entries")
         self.conn.commit()
+
+    # ---- trash (soft delete, 30-day retention) --------------------------
+    def restore(self, entry_id: int) -> None:
+        self.conn.execute("UPDATE period_entries SET deleted_at=NULL WHERE id=?",
+                          (entry_id,))
+        self.conn.commit()
+
+    def hard_delete(self, entry_id: int) -> None:
+        self.conn.execute("DELETE FROM period_entries WHERE id=?", (entry_id,))
+        self.conn.commit()
+
+    def list_trash(self) -> List[PeriodEntry]:
+        rows = self.conn.execute(
+            "SELECT * FROM period_entries WHERE deleted_at IS NOT NULL "
+            "ORDER BY deleted_at DESC").fetchall()
+        return [self._row_to_entry(r) for r in rows]
+
+    def empty_trash(self) -> None:
+        self.conn.execute("DELETE FROM period_entries WHERE deleted_at IS NOT NULL")
+        self.conn.commit()
+
+    def purge_expired(self, days: int = 30) -> int:
+        cutoff = (datetime.now() - timedelta(days=days)).isoformat(timespec="seconds")
+        cur = self.conn.execute(
+            "DELETE FROM period_entries WHERE deleted_at IS NOT NULL AND deleted_at < ?",
+            (cutoff,))
+        self.conn.commit()
+        return cur.rowcount
 
     # ---- settings (key-value) -------------------------------------------
     def get_setting(self, key: str, default: Optional[str] = None) -> Optional[str]:
@@ -162,6 +205,10 @@ class Database:
 
     def clear_pin(self) -> None:
         self.conn.execute("DELETE FROM settings WHERE key IN ('pin_hash','pin_salt')")
+        self.conn.commit()
+
+    def clear_settings(self) -> None:
+        self.conn.execute("DELETE FROM settings")
         self.conn.commit()
 
     def close(self) -> None:

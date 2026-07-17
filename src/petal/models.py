@@ -27,6 +27,7 @@ class PeriodEntry:
     id: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
 
     @property
     def period_length(self) -> Optional[int]:

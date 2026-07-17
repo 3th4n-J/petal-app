@@ -26,6 +26,7 @@ class CycleApp:
     def __init__(self, page: ft.Page):
         self.page = page
         self.db = Database()
+        self.db.purge_expired(30)
         T.apply_theme(self.db.get_setting("theme", "Lavender"))
         self.index = 0
         today = date.today()
@@ -136,6 +137,8 @@ class CycleApp:
             self._show_lock()
         elif self._mode == "form":
             self.open_log(self._form_entry)
+        elif self._mode == "trash":
+            self._show_trash()
         else:
             self.render()
 
@@ -355,13 +358,15 @@ class CycleApp:
         def _do(e):
             self.db.delete(entry.id)
             self.page.close(dlg)
+            self._toast("Moved to trash")
             self.render()
         dlg = ft.AlertDialog(
-            modal=True, title=ft.Text("Delete entry?"),
-            content=ft.Text(f"Remove period starting "
-                            f"{entry.start_date.strftime('%d %b %Y')}?"),
+            modal=True, title=ft.Text("Move to trash?"),
+            content=ft.Text(f"The period starting "
+                            f"{entry.start_date.strftime('%d %b %Y')} moves to Trash "
+                            f"and is deleted after 30 days."),
             actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.close(dlg)),
-                     ft.FilledButton("Delete", on_click=_do)])
+                     ft.FilledButton("Move to trash", on_click=_do)])
         self.page.open(dlg)
 
     # ---- Settings (centered content) -----------------------------------
@@ -443,12 +448,20 @@ class CycleApp:
 
         data = T.card(ft.Column(spacing=T.sc(12), horizontal_alignment=C, controls=[
             self._sec_label("DATA"),
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
+                ft.OutlinedButton(f"Trash ({len(self.db.list_trash())})",
+                                  icon=ft.Icons.DELETE_SWEEP_OUTLINED,
+                                  style=T.obtn_style(),
+                                  on_click=lambda e: self._show_trash())]),
             ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=T.sc(10), controls=[
                 ft.OutlinedButton("Load sample data", icon=ft.Icons.DATASET,
                                   style=T.obtn_style(), on_click=self._load_sample),
                 ft.TextButton("Delete all data", icon=ft.Icons.DELETE_FOREVER,
                               on_click=self._confirm_clear_all),
             ]),
+            ft.Row(alignment=ft.MainAxisAlignment.CENTER, controls=[
+                ft.TextButton("Reset app", icon=ft.Icons.RESTART_ALT,
+                              on_click=self._confirm_reset)]),
         ]))
 
         about = T.card(ft.Column(spacing=T.sc(8), horizontal_alignment=C, controls=[
@@ -611,6 +624,29 @@ class CycleApp:
                      ft.FilledButton("Delete all", on_click=_do)])
         self.page.open(dlg)
 
+    def _confirm_reset(self, e):
+        def _do(ev):
+            self.db.clear_entries()
+            self.db.clear_settings()
+            T.apply_theme("Lavender")
+            self.index = 0
+            today = date.today()
+            self.cal_year, self.cal_month = today.year, today.month
+            self.page.theme = T.app_theme()
+            self.page.bgcolor = T.BG
+            self.page.bottom_appbar = self._build_nav()
+            self.page.floating_action_button = self._fab()
+            self.page.close(dlg)
+            self._toast("App reset to defaults")
+            self.render()
+        dlg = ft.AlertDialog(
+            modal=True, title=ft.Text("Reset app?"),
+            content=ft.Text("This clears all logged data and restores default "
+                            "settings, theme and PIN. This can't be undone."),
+            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.close(dlg)),
+                     ft.FilledButton("Reset", on_click=_do)])
+        self.page.open(dlg)
+
     @staticmethod
     def _parse_iso(s: Optional[str]) -> Optional[date]:
         return date.fromisoformat(s) if s else None
@@ -625,6 +661,88 @@ class CycleApp:
                 on_pick(dp.value.date() if hasattr(dp.value, "date") else dp.value)
         dp.on_change = _ch
         self.page.open(dp)
+
+    # ---- trash ---------------------------------------------------------
+    def _show_trash(self):
+        self._mode = "trash"
+        self.db.purge_expired(30)
+        self._chrome(False)
+        self.body.gradient = T.page_gradient()
+        trash = self.db.list_trash()
+        if trash:
+            items = [self._trash_card(e) for e in trash]
+        else:
+            items = [ft.Container(padding=T.sc(24), alignment=ft.alignment.center,
+                                  content=ft.Text("Trash is empty.", color=T.MUTED))]
+        header = ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, controls=[
+            ft.Text("Items are permanently deleted after 30 days.",
+                    size=T.sc(12), color=T.MUTED),
+            (ft.TextButton("Empty trash", icon=ft.Icons.DELETE_FOREVER,
+                           on_click=self._confirm_empty_trash) if trash else ft.Container()),
+        ])
+        col = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True, spacing=T.sc(12),
+                        controls=[header, *items])
+        self.page.appbar = ft.AppBar(
+            title=ft.Text("Trash"), bgcolor=T.PRIMARY, color="white",
+            leading=ft.IconButton(ft.Icons.ARROW_BACK, icon_color="white",
+                                  on_click=lambda e: self._back_to_settings()))
+        self.body.content = ft.Container(col, padding=T.sc(16), expand=True)
+        self.page.update()
+
+    def _back_to_settings(self):
+        self.index = 3
+        self.render()
+
+    def _trash_card(self, entry: PeriodEntry) -> ft.Control:
+        days_left = 30
+        if entry.deleted_at:
+            days_left = max(0, 30 - (datetime.now() - entry.deleted_at).days)
+        rng = entry.start_date.strftime("%d %b %Y")
+        if entry.end_date:
+            rng += f"  ->  {entry.end_date.strftime('%d %b')}"
+        return T.card(padding=T.sc(14), content=ft.Column(spacing=T.sc(8), controls=[
+            ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, controls=[
+                ft.Text(rng, weight=ft.FontWeight.BOLD, size=T.sc(15),
+                        color=T.ON_SURFACE),
+                ft.Text(f"{days_left}d left", size=T.sc(12), color=T.MUTED)]),
+            ft.Row(alignment=ft.MainAxisAlignment.END, spacing=T.sc(6), controls=[
+                ft.TextButton("Restore", icon=ft.Icons.RESTORE,
+                              on_click=lambda e, en=entry: self._restore(en)),
+                ft.TextButton("Delete forever", icon=ft.Icons.DELETE_FOREVER,
+                              on_click=lambda e, en=entry: self._confirm_hard_delete(en)),
+            ]),
+        ]))
+
+    def _restore(self, entry: PeriodEntry):
+        self.db.restore(entry.id)
+        self._toast("Restored")
+        self._show_trash()
+
+    def _confirm_hard_delete(self, entry: PeriodEntry):
+        def _do(ev):
+            self.db.hard_delete(entry.id)
+            self.page.close(dlg)
+            self._toast("Deleted permanently")
+            self._show_trash()
+        dlg = ft.AlertDialog(
+            modal=True, title=ft.Text("Delete forever?"),
+            content=ft.Text("This entry will be permanently deleted. This can't be undone."),
+            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.close(dlg)),
+                     ft.FilledButton("Delete forever", on_click=_do)])
+        self.page.open(dlg)
+
+    def _confirm_empty_trash(self, e):
+        def _do(ev):
+            self.db.empty_trash()
+            self.page.close(dlg)
+            self._toast("Trash emptied")
+            self._show_trash()
+        dlg = ft.AlertDialog(
+            modal=True, title=ft.Text("Empty trash?"),
+            content=ft.Text("Permanently delete everything in Trash. This can't be undone."),
+            actions=[ft.TextButton("Cancel", on_click=lambda e: self.page.close(dlg)),
+                     ft.FilledButton("Empty trash", on_click=_do)])
+        self.page.open(dlg)
 
     # ---- log form ------------------------------------------------------
     def open_log(self, entry: Optional[PeriodEntry] = None):
