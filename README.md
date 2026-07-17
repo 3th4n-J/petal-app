@@ -6,7 +6,7 @@
 
 **Your cycle, gently tracked — private, offline, and beautifully simple.**
 
-[![Version](https://img.shields.io/badge/version-3.1.0-7C4DFF)](https://github.com/3th4n-J/petal-app/releases)
+[![Version](https://img.shields.io/github/v/release/3th4n-J/petal-app?sort=semver&color=7C4DFF&label=version)](https://github.com/3th4n-J/petal-app/releases/latest)
 [![Platform](https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white)](https://github.com/3th4n-J/petal-app/releases)
 [![Built with Flet](https://img.shields.io/badge/built%20with-Flet-00C8FF)](https://flet.dev)
 [![Python](https://img.shields.io/badge/python-3.13-3776AB?logo=python&logoColor=white)](https://www.python.org)
