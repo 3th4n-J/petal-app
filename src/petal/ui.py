@@ -780,8 +780,8 @@ class CycleApp:
         st = {"start": entry.start_date if editing else date.today(),
               "end": entry.end_date if editing else None}
 
-        start_btn = ft.OutlinedButton(icon=ft.Icons.CALENDAR_MONTH, style=T.obtn_style())
-        end_btn = ft.OutlinedButton(icon=ft.Icons.CALENDAR_MONTH, style=T.obtn_style())
+        start_btn = ft.OutlinedButton(icon=ft.Icons.CALENDAR_MONTH, style=T.obtn_style(), expand=True)
+        end_btn = ft.OutlinedButton(icon=ft.Icons.CALENDAR_MONTH, style=T.obtn_style(), expand=True)
 
         def sync():
             start_btn.content = st["start"].strftime("%d %b %Y")
@@ -830,12 +830,17 @@ class CycleApp:
 
         form = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True, spacing=T.sc(16),
                          horizontal_alignment=ft.CrossAxisAlignment.STRETCH, controls=[
-            T.card(ft.Column(spacing=T.sc(14), controls=[
-                ft.Row([ft.Text("Start", width=T.sc(70), color=T.MUTED), start_btn]),
-                ft.Row([ft.Text("End", width=T.sc(70), color=T.MUTED), end_btn,
-                        ft.TextButton("Clear",
-                                      on_click=lambda e: (st.update(end=None), sync()))]),
-            ])),
+            T.card(ft.Row(
+                vertical_alignment=ft.CrossAxisAlignment.START,
+                controls=[
+                    ft.Column(expand=True, spacing=T.sc(14), controls=[
+                        ft.Row([ft.Text("Start", width=T.sc(70), color=T.MUTED), start_btn]),
+                        ft.Row([ft.Text("End", width=T.sc(70), color=T.MUTED), end_btn]),
+                    ]),
+                    ft.IconButton(ft.Icons.CLOSE, icon_color=T.MUTED, icon_size=T.sc(18),
+                                  tooltip="Clear end date",
+                                  on_click=lambda e: (st.update(end=None), sync())),
+                ])),
             T.card(ft.Column(spacing=T.sc(14), controls=[
                 ft.Row([flow_dd]), ft.Row([mood_dd])])),
             T.card(ft.Column(spacing=T.sc(10), controls=[
@@ -853,7 +858,7 @@ class CycleApp:
         self.page.appbar = ft.AppBar(
             title=ft.Text("Edit entry" if editing else "Log period"),
             bgcolor=T.PRIMARY, color="white",
-            leading=ft.IconButton(ft.Icons.CLOSE, icon_color="white",
+            leading=ft.IconButton(ft.Icons.ARROW_BACK_IOS_NEW, icon_color="white",
                                   on_click=lambda e: self._close_form()))
         self.body.content = ft.Container(form, padding=16, expand=True)
         self.page.update()
