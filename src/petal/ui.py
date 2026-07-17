@@ -196,6 +196,8 @@ class CycleApp:
                 "evening" if h < 21 else "night")
         # stable within a slot each day, but varies day to day
         rng = random.Random(f"{date.today().isoformat()}-{slot}")
+        if not name:
+            who = rng.choice(["friend", "lovely", "sunshine", "you"])
         return rng.choice(self._GREETINGS[slot]).format(who=who)
 
     # ---- Today (full-bleed, centered) ----------------------------------
