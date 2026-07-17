@@ -71,16 +71,16 @@ class CycleApp:
     def _build_nav(self) -> ft.BottomAppBar:
         barW = self.page.width or 430
         self._slotW = barW / 5.0
-        self._pill_w = min(self._slotW * 0.86, T.sc(84))
-        self._pill_h = T.sc(48)
         row_h = T.sc(58)                 # the icon+label row area
+        self._pill_w = self._slotW - T.sc(8)   # span the cell (icon + label)
+        self._pill_h = row_h - T.sc(6)
         self._pill_top = (row_h - self._pill_h) / 2
         # The active "box" is a positioned pill that slides + springs between items.
         self._pill = ft.Container(
-            width=self._pill_w, height=self._pill_h, border_radius=T.sc(16),
+            width=self._pill_w, height=self._pill_h, border_radius=T.sc(18),
             bgcolor=T.alpha(T.PRIMARY, 0.16),
             left=self._pill_left(self.index), top=self._pill_top,
-            animate_position=ft.Animation(480, ft.AnimationCurve.ELASTIC_OUT),
+            animate_position=ft.Animation(380, ft.AnimationCurve.EASE_OUT_BACK),
             animate=ft.Animation(250, ft.AnimationCurve.EASE_OUT))
         self._nav_icons, self._nav_labels, cells = [], [], []
         for i, (idx, icon, sel_icon, lbl) in enumerate(self._NAV):
@@ -93,13 +93,13 @@ class CycleApp:
             self._nav_icons.append(ic)
             self._nav_labels.append(lb)
             cells.append(ft.Container(
-                width=self._slotW, height=row_h, alignment=ft.Alignment.CENTER,
+                expand=True, height=row_h, alignment=ft.Alignment.CENTER,
                 on_click=lambda e, k=i: self._select(k),
                 content=ft.Column([ic, lb], spacing=T.sc(3), tight=True,
                                   alignment=ft.MainAxisAlignment.CENTER,
                                   horizontal_alignment=ft.CrossAxisAlignment.CENTER)))
         row = ft.Row(spacing=0, controls=[
-            cells[0], cells[1], ft.Container(width=self._slotW), cells[2], cells[3]])
+            cells[0], cells[1], ft.Container(expand=True), cells[2], cells[3]])
         # SafeArea (bottom only) lifts the bar above the Android gesture bar /
         # iOS home indicator instead of clipping into it. No fixed height -> the
         # BottomAppBar grows to fit content + the system inset.

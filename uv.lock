@@ -466,7 +466,7 @@ wheels = [
 
 [[package]]
 name = "petal"
-version = "3.0.14"
+version = "3.0.15"
 source = { editable = "." }
 dependencies = [
     { name = "flet", extra = ["all"] },
