@@ -836,7 +836,9 @@ class CycleApp:
                         ft.TextButton("Clear",
                                       on_click=lambda e: (st.update(end=None), sync()))]),
             ])),
-            T.card(ft.Column(spacing=T.sc(14), controls=[flow_dd, mood_dd])),
+            T.card(ft.Column(spacing=T.sc(14),
+                             horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+                             controls=[flow_dd, mood_dd])),
             T.card(ft.Column(spacing=T.sc(10), controls=[
                 T.label("SYMPTOMS"),
                 ft.Row(chips, wrap=True, spacing=T.sc(6), run_spacing=T.sc(6))])),
