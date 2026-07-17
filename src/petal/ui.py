@@ -468,14 +468,12 @@ class CycleApp:
 
         about = T.card(ft.Column(spacing=T.sc(8), horizontal_alignment=C, controls=[
             self._sec_label("ABOUT"),
-            ft.Row(alignment=ft.MainAxisAlignment.CENTER, spacing=T.sc(10), controls=[
-                ft.Icon(ft.Icons.FAVORITE, color=T.C_PERIOD, size=T.sc(22)),
-                ft.Column(spacing=T.sc(0), horizontal_alignment=C, controls=[
-                    ft.Text("Petal", color=T.ON_SURFACE,
-                            weight=ft.FontWeight.BOLD, size=T.sc(15)),
-                    ft.Text(f"Version {APP_VERSION}", color=T.MUTED, size=T.sc(12)),
-                ]),
-            ]),
+            ft.Container(
+                content=ft.Image(src="icon.png", width=T.sc(56), height=T.sc(56),
+                                 border_radius=T.sc(12), fit=ft.BoxFit.CONTAIN),
+                border=ft.Border.all(2, T.PRIMARY), border_radius=T.sc(14),
+                padding=T.sc(3)),
+            ft.Text(f"Version {APP_VERSION}", color=T.MUTED, size=T.sc(12)),
             ft.Text("A private period and cycle tracker built for my angel ❤️ — log periods, symptoms "
                     "and moods, and see your phase, fertile window and next-period "
                     "predictions at a glance.",
