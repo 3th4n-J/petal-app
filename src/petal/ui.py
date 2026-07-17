@@ -796,12 +796,12 @@ class CycleApp:
         flow_dd = ft.Dropdown(label="Flow", value=entry.flow if editing else "Medium",
                               options=[ft.dropdown.Option(f) for f in FLOW_LEVELS],
                               border_radius=T.sc(14), border_color=T.PRIMARY,
-                              color=T.PRIMARY_DEEP)
+                              color=T.PRIMARY_DEEP, expand=True)
         mood_dd = ft.Dropdown(label="Mood", value=entry.mood if editing else "",
                               options=[ft.dropdown.Option(key="", text="— None —")] +
                               [ft.dropdown.Option(m) for m in MOODS],
                               border_radius=T.sc(14), border_color=T.PRIMARY,
-                              color=T.PRIMARY_DEEP)
+                              color=T.PRIMARY_DEEP, expand=True)
         notes_tf = ft.TextField(label="Notes", multiline=True, min_lines=2, max_lines=4,
                                 border_radius=T.sc(14), border_color=T.PRIMARY,
                                 color=T.PRIMARY_DEEP,
@@ -836,9 +836,8 @@ class CycleApp:
                         ft.TextButton("Clear",
                                       on_click=lambda e: (st.update(end=None), sync()))]),
             ])),
-            T.card(ft.Column(spacing=T.sc(14),
-                             horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
-                             controls=[flow_dd, mood_dd])),
+            T.card(ft.Column(spacing=T.sc(14), controls=[
+                ft.Row([flow_dd]), ft.Row([mood_dd])])),
             T.card(ft.Column(spacing=T.sc(10), controls=[
                 T.label("SYMPTOMS"),
                 ft.Row(chips, wrap=True, spacing=T.sc(6), run_spacing=T.sc(6))])),
