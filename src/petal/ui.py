@@ -769,13 +769,16 @@ class CycleApp:
 
         flow_dd = ft.Dropdown(label="Flow", value=entry.flow if editing else "Medium",
                               options=[ft.dropdown.Option(f) for f in FLOW_LEVELS],
-                              border_radius=T.sc(14), border_color=T.PRIMARY)
+                              border_radius=T.sc(14), border_color=T.PRIMARY,
+                              color=T.PRIMARY_DEEP)
         mood_dd = ft.Dropdown(label="Mood", value=entry.mood if editing else "",
                               options=[ft.dropdown.Option(key="", text="— None —")] +
                               [ft.dropdown.Option(m) for m in MOODS],
-                              border_radius=T.sc(14), border_color=T.PRIMARY)
+                              border_radius=T.sc(14), border_color=T.PRIMARY,
+                              color=T.PRIMARY_DEEP)
         notes_tf = ft.TextField(label="Notes", multiline=True, min_lines=2, max_lines=4,
                                 border_radius=T.sc(14), border_color=T.PRIMARY,
+                                color=T.PRIMARY_DEEP,
                                 value=entry.notes if editing else "")
 
         selected = set(entry.symptoms) if editing else set()
@@ -784,7 +787,9 @@ class CycleApp:
             def _tog(e, n=name):
                 selected.add(n) if e.control.selected else selected.discard(n)
             chips.append(ft.Chip(label=ft.Text(name), selected=name in selected,
-                                 selected_color=T.LILAC, on_select=_tog))
+                                 selected_color=T.LILAC, check_color=T.PRIMARY_DEEP,
+                                 border_side=ft.BorderSide(1.2, T.PRIMARY),
+                                 on_select=_tog))
 
         err = ft.Text("", color=T.C_PERIOD, visible=False)
 
