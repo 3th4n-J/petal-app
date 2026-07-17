@@ -746,6 +746,36 @@ class CycleApp:
                      ft.FilledButton("Empty trash", on_click=_do)])
         self.page.show_dialog(dlg)
 
+    def _symptom_chip(self, name: str, selected: set) -> ft.Control:
+        TL, BR = ft.Alignment.TOP_LEFT, ft.Alignment.BOTTOM_RIGHT
+
+        def paint(c, on):
+            c.gradient = ft.LinearGradient(
+                begin=TL, end=BR,
+                colors=([T.alpha(T.PRIMARY, 0.35), T.alpha(T.LILAC, 0.55)] if on
+                        else [T.SURFACE, T.alpha(T.PRIMARY, 0.12)]))
+            row = []
+            if on:
+                row.append(ft.Icon(ft.Icons.CHECK, size=T.sc(15), color=T.PRIMARY_DEEP))
+            row.append(ft.Text(name, size=T.sc(13), color=T.PRIMARY_DEEP,
+                               weight=ft.FontWeight.W_600 if on else ft.FontWeight.W_500))
+            c.content = ft.Row(row, spacing=T.sc(4), tight=True)
+
+        cont = ft.Container(
+            border=ft.Border.all(1.2, T.PRIMARY), border_radius=T.sc(20),
+            padding=ft.Padding.symmetric(horizontal=T.sc(14), vertical=T.sc(9)),
+            animate_scale=ft.Animation(140, ft.AnimationCurve.EASE_OUT))
+
+        def toggle(e):
+            on = name not in selected
+            selected.add(name) if on else selected.discard(name)
+            paint(cont, on)
+            self.page.update()
+
+        cont.on_click = toggle
+        paint(cont, name in selected)
+        return cont
+
     # ---- log form ------------------------------------------------------
     def open_log(self, entry: Optional[PeriodEntry] = None):
         editing = entry is not None
@@ -782,14 +812,7 @@ class CycleApp:
                                 value=entry.notes if editing else "")
 
         selected = set(entry.symptoms) if editing else set()
-        chips = []
-        for name in SYMPTOMS:
-            def _tog(e, n=name):
-                selected.add(n) if e.control.selected else selected.discard(n)
-            chips.append(ft.Chip(label=ft.Text(name), selected=name in selected,
-                                 selected_color=T.LILAC, check_color=T.PRIMARY_DEEP,
-                                 border_side=ft.BorderSide(1.2, T.PRIMARY),
-                                 on_select=_tog))
+        chips = [self._symptom_chip(name, selected) for name in SYMPTOMS]
 
         err = ft.Text("", color=T.C_PERIOD, visible=False)
 
